@@ -1,6 +1,7 @@
 venv/
 env/
-data/processed/
+data/processed/*
+!data/processed/.keep
 __pycache__/
 *.pyc
 *.pkl
