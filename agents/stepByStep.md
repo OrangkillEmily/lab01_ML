@@ -8,7 +8,7 @@
 
 ## 2. Chosen Direction (Định hướng & Kiến trúc)
 - **Nguồn dữ liệu:** Đọc từ `data/raw/SpamAssassin.csv`.
-- **Quy trình ELT/ML:** Đọc raw CSV -> Tiền xử lý (Cleaning + TF-IDF) -> Chia Train/Test (80-20) -> Lưu xuống đĩa -> Huấn luyện -> Đánh giá.
+- **Quy trình ELT/ML:** Đọc raw CSV -> Tiền xử lý (Cleaning + TF-IDF) -> Chia Train/Test (80-20) -> Lưu xuống đĩa -> Built model-> Huấn luyện -> Đánh giá.
 - **Tiền xử lý:** Loại bỏ thẻ HTML, dấu câu, stop-words tiếng Anh.
 - **Log & Trace:** Thông báo chạy pipeline phải được in rõ ràng ra terminal.
 - **Môi trường:** Quản lý bằng `venv` và `requirements.txt`.
@@ -29,6 +29,8 @@
 - `src/utils.py`: Chứa các hàm tiện ích dùng chung (đo thời gian, nạp/lưu file).
 - `src/pipeline.py`: Kịch bản điều phối, gọi chạy tuần tự preprocess -> train -> evaluate.
 - `src/predict.py`: Kịch bản test nhanh, nhập vào 1 email bất kỳ trên terminal để mô hình dự đoán.
+- `src/model.py`: Xây dựng mô hình từ đầu (from scratch) không dùng thư viện có sẵn như scikit-learn.
+- `models/`: Nơi lưu trữ các file mô hình phân loại đã được huấn luyện hoàn chỉnh (định dạng .pkl), dùng để mang ra đánh giá hoặc dự đoán email mới.
 
 ## 4. Install & Setup (Cài đặt môi trường & Chuẩn bị)
 
@@ -87,9 +89,15 @@ Cắt lớp (Train/Test Split): Dùng train_test_split cắt dữ liệu theo t�
 
 
 **Giai đoạn 3: Huấn luyện 3 Mô hình (Model Training)**
-Mục tiêu: Đưa dữ liệu 80% vào dạy cho máy học cách nhận diện Spam.
+Mục tiêu: Đưa dữ liệu 80% vào dạy cho máy học cách nhận diện Spam bằng các thuật toán tự xây dựng từ đầu (from scratch).
 
-Nhiệm vụ (File src/train.py):
+**Nhiệm vụ 1 (File src/model.py):**
+ Xây dựng thủ công các class cho 3 thuật toán bằng kiến thức Toán rời rạc & Đại số tuyến tính. Tuyệt đối không dùng thư viện có sẵn (như scikit-learn) cho các model này. Các class cần có cấu trúc:
+Hàm __init__(self): Khởi tạo các siêu tham số (learning rate, số vòng lặp...).
+Hàm fit(self, X, y): Viết vòng lặp để cập nhật trọng số (weights, bias) dựa trên đạo hàm (Gradient Descent) cho Logistic Regression/SVM, hoặc tính xác suất tiên nghiệm (Prior/Likelihood) cho Naive Bayes.
+Hàm predict(self, X): Tính toán và trả về nhãn dự đoán (0 hoặc 1).
+
+**Nhiệm vụ 2 (File src/train.py):**
 
 Chỉ được phép đọc file X_train và y_train từ thư mục data/processed/.
 
