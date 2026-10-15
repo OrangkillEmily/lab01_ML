@@ -1,7 +1,7 @@
 venv/
 env/
-data/
+data/processed/
 __pycache__/
 *.pyc
 *.pkl
-reports/figures/
+model/*.pkl
