@@ -1,10 +1,9 @@
 
 import re
+import pickle
 from pathlib import Path
 
-import joblib
 import pandas as pd
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
@@ -17,13 +16,13 @@ MODEL_DIR = ROOT_DIR / "models"
 def clean_text(text):
     text = str(text).lower()
 
-    # Bo cac ky tu xuong dong va khoang trang thua
-    text = re.sub(r"\s+", " ", text)
+    # Xoa the HTML
+    text = re.sub(r"<[^>]+>", " ", text)
 
     # Bo URL
     text = re.sub(r"http\S+|www\.\S+", " ", text)
 
-    # Chi giu chu cai va khoang trang
+    # Chi giu chu cai tieng Anh va khoang trang
     text = re.sub(r"[^a-z\s]", " ", text)
 
     # Chuan hoa khoang trang
@@ -41,6 +40,7 @@ def main():
     # Xoa email trung lap theo noi dung va nhan
     df = df.drop_duplicates(subset=["label", "data"])
 
+    # Lam sach noi dung email
     df["data"] = df["data"].apply(clean_text)
 
     # Bo email rong sau khi lam sach
@@ -49,7 +49,8 @@ def main():
     X = df["data"]
     y = df["label"]
 
-    # Chia du lieu truoc khi hoc TF-IDF
+    # Chia du lieu train/test theo ty le 80/20
+    # Thuc hien truoc khi huan luyen TF-IDF de tranh ro ri du lieu
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -58,22 +59,31 @@ def main():
         stratify=y
     )
 
-    # TF-IDF chi fit tren tap train
-    vectorizer = TfidfVectorizer(max_features=10000)
+    # Chi fit TF-IDF tren tap train
+    # Loai bo stop-words tieng Anh
+    vectorizer = TfidfVectorizer(
+        max_features=10000,
+        stop_words="english"
+    )
 
     X_train_tfidf = vectorizer.fit_transform(X_train)
     X_test_tfidf = vectorizer.transform(X_test)
 
+    # Tao thu muc dau ra
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Luu ma tran dac trung
-    joblib.dump(X_train_tfidf, OUTPUT_DIR / "X_train.joblib")
-    joblib.dump(X_test_tfidf, OUTPUT_DIR / "X_test.joblib")
+    # Luu du 4 tap du lieu dang PKL
+    output_data = {
+        "X_train.pkl": X_train_tfidf,
+        "X_test.pkl": X_test_tfidf,
+        "y_train.pkl": y_train,
+        "y_test.pkl": y_test
+    }
 
-    # Luu nhan
-    y_train.to_csv(OUTPUT_DIR / "y_train.csv", index=False)
-    y_test.to_csv(OUTPUT_DIR / "y_test.csv", index=False)
+    for filename, data in output_data.items():
+        with open(OUTPUT_DIR / filename, "wb") as file:
+            pickle.dump(data, file)
 
     # Luu du lieu da lam sach de kiem tra
     pd.DataFrame({
@@ -86,16 +96,16 @@ def main():
         "label": y_test
     }).to_csv(OUTPUT_DIR / "test_clean.csv", index=False)
 
-    # Luu vectorizer de dung lai khi du doan
-    joblib.dump(
-        vectorizer,
-        MODEL_DIR / "tfidf_vectorizer.joblib"
-    )
+    # Luu mo hinh TF-IDF dang PKL
+    with open(MODEL_DIR / "tfidf_vectorizer.pkl", "wb") as file:
+        pickle.dump(vectorizer, file)
 
     print("Da tien xu ly xong.")
     print("So mau train:", X_train_tfidf.shape[0])
     print("So mau test:", X_test_tfidf.shape[0])
     print("So dac trung TF-IDF:", X_train_tfidf.shape[1])
+    print("Da luu 4 tap du lieu dang .pkl trong data/processed/")
+    print("Da luu TF-IDF trong models/tfidf_vectorizer.pkl")
 
 
 if __name__ == "__main__":
