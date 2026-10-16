@@ -2,8 +2,8 @@ import numpy as np
 
 class LogisticRegression:
     def __init__(self,learning_rate,n_iterations): 
-        self.learning_rate = 0.01
-        self.n_iterations = 1000
+        self.learning_rate = learning_rate
+        self.n_iterations = n_iterations
         self.weights = None
         self.bias = 0
     def _sigmoid(self, x):
@@ -34,9 +34,9 @@ class LogisticRegression:
 
 class SVM:
     def __init__(self,learning_rate, lambda_param, n_iterations):
-        self.learning_rate = 0.0001
-        self.lambda_param = 0.01
-        self.n_iterations = 1000 
+        self.learning_rate = learning_rate
+        self.lambda_param = lambda_param
+        self.n_iterations = n_iterations 
         self.weights = None
         self.bias = 0
 
@@ -61,7 +61,7 @@ class SVM:
                     self.bias -= self.learning_rate * y_[idx]
 
     def predict(self, X):
-        # đưa giá trị về khoảng (0,1)
+        # # Chuyển đổi kết quả dự đoán thành 0 hoặc 1
         approx = np.dot(X, self.weights) - self.bias
         y_pred = np.sign(approx)
         # nếu y_pred[idx] có giá trị là -1 trả về 0, nếu không thì trả về 1 
