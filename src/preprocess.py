@@ -1,9 +1,9 @@
-
 import re
 import pickle
 from pathlib import Path
 
 import pandas as pd
+import yaml
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
@@ -11,6 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "raw" / "SpamAssassin.csv"
 OUTPUT_DIR = ROOT_DIR / "data" / "processed"
 MODEL_DIR = ROOT_DIR / "models"
+CONFIG_PATH = ROOT_DIR / "config.yaml"
 
 
 def clean_text(text):
@@ -32,6 +33,22 @@ def clean_text(text):
 
 
 def main():
+    # Doc cau hinh tu config.yaml
+    with open(CONFIG_PATH, "r", encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file) or {}
+
+    data_config = config.get("data", {})
+    tfidf_config = config.get("tfidf", {})
+
+    # Lay tham so chia Train/Test
+    test_size = float(data_config.get("test_size", 0.2))
+    random_state = int(data_config.get("random_state", 42))
+
+    # Lay tham so TF-IDF
+    max_features = int(tfidf_config.get("max_features", 10000))
+    ngram_range = tuple(tfidf_config.get("ngram_range", [1, 2]))
+
+    # Doc du lieu
     df = pd.read_csv(DATA_PATH)
 
     # Chi giu cac dong co nhan va noi dung
@@ -49,23 +66,24 @@ def main():
     X = df["data"]
     y = df["label"]
 
-    # Chia du lieu train/test theo ty le 80/20
-    # Thuc hien truoc khi huan luyen TF-IDF de tranh ro ri du lieu
+    # Chia du lieu Train/Test theo cau hinh
+    # Stratify giu ty le nhan gan voi du lieu ban dau
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
-        test_size=0.2,
-        random_state=42,
+        test_size=test_size,
+        random_state=random_state,
         stratify=y
     )
 
-    # Chi fit TF-IDF tren tap train
-    # Loai bo stop-words tieng Anh
+    # Tao vectorizer TF-IDF
     vectorizer = TfidfVectorizer(
-        max_features=10000,
+        max_features=max_features,
+        ngram_range=ngram_range,
         stop_words="english"
     )
 
+    # Chi fit tren Train de tranh ro ri du lieu
     X_train_tfidf = vectorizer.fit_transform(X_train)
     X_test_tfidf = vectorizer.transform(X_test)
 
@@ -73,7 +91,7 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Luu du 4 tap du lieu dang PKL
+    # Luu 4 tap du lieu dang PKL
     output_data = {
         "X_train.pkl": X_train_tfidf,
         "X_test.pkl": X_test_tfidf,
@@ -96,7 +114,7 @@ def main():
         "label": y_test
     }).to_csv(OUTPUT_DIR / "test_clean.csv", index=False)
 
-    # Luu mo hinh TF-IDF dang PKL
+    # Luu vectorizer TF-IDF
     with open(MODEL_DIR / "tfidf_vectorizer.pkl", "wb") as file:
         pickle.dump(vectorizer, file)
 
@@ -104,6 +122,10 @@ def main():
     print("So mau train:", X_train_tfidf.shape[0])
     print("So mau test:", X_test_tfidf.shape[0])
     print("So dac trung TF-IDF:", X_train_tfidf.shape[1])
+    print("Test size:", test_size)
+    print("Random state:", random_state)
+    print("Max features:", max_features)
+    print("N-gram range:", ngram_range)
     print("Da luu 4 tap du lieu dang .pkl trong data/processed/")
     print("Da luu TF-IDF trong models/tfidf_vectorizer.pkl")
 

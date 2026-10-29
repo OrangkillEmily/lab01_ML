@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import pandas as pd
@@ -6,13 +5,15 @@ import matplotlib.pyplot as plt
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "raw" / "SpamAssassin.csv"
-OUTPUT_DIR = ROOT_DIR / "reports"
+REPORT_DIR = ROOT_DIR / "reports"
+IMAGE_DIR = ROOT_DIR / "docs" / "images"
 
 
 def main():
     df = pd.read_csv(DATA_PATH)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
     print("Kich thuoc du lieu:", df.shape)
     print("\nCac cot:", df.columns.tolist())
@@ -25,24 +26,30 @@ def main():
     print("\nPhan bo nhan:")
     print(df["label"].value_counts().sort_index())
 
-    # Luu thong ke nhan
+    # Luu thong ke nhan vao reports/
     df["label"].value_counts().sort_index().to_csv(
-        OUTPUT_DIR / "label_distribution.csv",
+        REPORT_DIR / "label_distribution.csv",
         header=["count"]
     )
 
-    # Ve bieu do
+    # Ve bieu do phan bo nhan
     df["label"].value_counts().sort_index().plot(
         kind="bar",
         figsize=(7, 5)
     )
 
-    plt.title("Phan bo email theo nhan")
-    plt.xlabel("Label")
-    plt.ylabel("So luong")
+    plt.title("Phân bố email theo nhãn trong dữ liệu thô")
+    plt.xlabel("Nhãn email")
+    plt.ylabel("Số lượng email")
     plt.xticks(rotation=0)
     plt.tight_layout()
-    plt.savefig(OUTPUT_DIR / "label_distribution.png", dpi=300)
+
+    # Luu bieu do vao docs/images/
+    plt.savefig(
+        IMAGE_DIR / "label_distribution.png",
+        dpi=300,
+        bbox_inches="tight"
+    )
     plt.close()
 
     # Thong ke do dai email
@@ -51,7 +58,8 @@ def main():
     print("\nThong ke do dai email:")
     print(df["email_length"].describe())
 
-    print("\nDa luu ket qua trong thu muc reports/")
+    print("\nDa luu file CSV trong thu muc reports/")
+    print("Da luu bieu do trong thu muc docs/images/")
 
 
 if __name__ == "__main__":
