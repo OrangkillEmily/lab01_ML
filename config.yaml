@@ -1,0 +1,21 @@
+data:
+  test_size: 0.2
+  random_state: 42
+tfidf:
+  max_features: 10000
+  ngram_range:
+  - 1
+  - 2
+models:
+  logistic_regression:
+    learning_rate: 0.1
+    n_iterations: 1000
+  naive_bayes: {}
+  svm:
+    learning_rate: 0.01
+    lambda_param: 0.01
+    n_iterations: 100
+tuning:
+  enabled: false
+  cv: 5
+  scoring: f1

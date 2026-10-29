@@ -1,4 +1,3 @@
-
 import sys
 from pathlib import Path
 
@@ -23,6 +22,7 @@ from src.model import LogisticRegression, NaiveBayes, SVM  # noqa: F401
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODEL_DIR = ROOT_DIR / "models"
 REPORT_DIR = ROOT_DIR / "reports"
+IMAGE_DIR = ROOT_DIR / "docs" / "images"
 
 
 def compute_metrics(y_true, y_pred):
@@ -85,7 +85,7 @@ def plot_confusion_matrix(cm, model_name, save_path):
     plt.ylabel("Thực tế")
     plt.title(f"Confusion Matrix - {model_name}")
     plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
 
 
@@ -117,7 +117,7 @@ def plot_all_confusion_matrices(results, save_path):
         ax.set_title(f"Confusion Matrix - {model_name}")
 
     plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
 
 
@@ -194,6 +194,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
     print("\n" + "=" * 55)
     print("BẮT ĐẦU ĐÁNH GIÁ CÁC MÔ HÌNH")
@@ -278,7 +279,7 @@ def main():
             if dataset_name == "Test":
                 test_results[model_name] = metrics
 
-                confusion_matrix_path = REPORT_DIR / (
+                confusion_matrix_path = IMAGE_DIR / (
                     f"confusion_matrix_"
                     f"{model_suffixes[model_name]}.png"
                 )
@@ -330,7 +331,7 @@ def main():
     print(f"[DONE] Đã lưu bảng metrics tại: {summary_path}")
 
     all_confusion_matrices_path = (
-        REPORT_DIR / "confusion_matrix_all.png"
+        IMAGE_DIR / "confusion_matrix_all.png"
     )
 
     plot_all_confusion_matrices(
