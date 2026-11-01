@@ -6,3 +6,5 @@ seaborn
 nltk
 joblib
 beautifulsoup4
+pyyaml
+streamlit
