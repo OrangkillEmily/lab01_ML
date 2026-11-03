@@ -11,6 +11,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.metrics import roc_curve, auc
+
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +28,6 @@ IMAGE_DIR = ROOT_DIR / "docs" / "images"
 
 
 def compute_metrics(y_true, y_pred):
-    """Tính các chỉ số phân loại nhị phân, xem nhãn 1 là Spam."""
     y_true = np.asarray(y_true).ravel()
     y_pred = np.asarray(y_pred).ravel()
 
@@ -68,8 +69,132 @@ def compute_metrics(y_true, y_pred):
     }
 
 
+def get_roc_scores(model, X, model_name):
+    if model_name == "Logistic Regression":
+        linear_model = np.asarray(
+            X @ model.weights
+        ).flatten() + model.bias
+
+        linear_model = np.clip(linear_model, -500, 500)
+        scores = 1 / (1 + np.exp(-linear_model))
+
+    elif model_name == "SVM":
+        scores = np.asarray(
+            X @ model.weights
+        ).flatten() + model.bias
+
+    elif model_name == "Naive Bayes":
+        spam_idx = np.where(model.classes == 1)[0][0]
+        ham_idx = np.where(model.classes == 0)[0][0]
+
+        def calculate_log_posterior(class_idx):
+            mean = model.mean[class_idx]
+            var = model.var[class_idx]
+
+            inverse_var = 1.0 / var
+
+            constant = np.sum(
+                np.log(2 * np.pi * var)
+                + (mean ** 2) / var
+            )
+
+            if hasattr(X, "power"):
+                squared_term = np.asarray(
+                    X.power(2) @ inverse_var
+                ).flatten()
+            else:
+                X_array = np.asarray(X)
+                squared_term = (X_array ** 2) @ inverse_var
+
+            linear_term = np.asarray(
+                X @ (mean * inverse_var)
+            ).flatten()
+
+            log_likelihood = -0.5 * (
+                constant + squared_term - 2 * linear_term
+            )
+
+            log_prior = np.log(
+                model.priors[class_idx] + 1e-12
+            )
+
+            return log_prior + log_likelihood
+
+        spam_scores = calculate_log_posterior(spam_idx)
+        ham_scores = calculate_log_posterior(ham_idx)
+
+        scores = spam_scores - ham_scores
+
+    else:
+        raise ValueError(
+            f"Không hỗ trợ ROC cho mô hình: {model_name}"
+        )
+
+    return np.asarray(scores).ravel()
+
+
+def plot_roc_curve(y_true, models, X_test, save_path):
+    y_true = np.asarray(y_true).ravel()
+
+    if len(np.unique(y_true)) != 2:
+        raise ValueError(
+            "ROC Curve yêu cầu tập dữ liệu có đủ hai lớp Spam và Ham."
+        )
+
+    plt.figure(figsize=(9, 7))
+
+    auc_results = {}
+
+    for model_name, model in models.items():
+        scores = get_roc_scores(model, X_test, model_name)
+
+        fpr, tpr, _ = roc_curve(
+            y_true,
+            scores,
+            pos_label=1
+        )
+
+        roc_auc = auc(fpr, tpr)
+        auc_results[model_name] = roc_auc
+
+        plt.plot(
+            fpr,
+            tpr,
+            linewidth=2,
+            label=f"{model_name} (AUC = {roc_auc:.4f})"
+        )
+
+        print(f"[ROC] {model_name}: AUC = {roc_auc:.4f}")
+
+    plt.plot(
+        [0, 1],
+        [0, 1],
+        color="gray",
+        linestyle="--",
+        linewidth=1.5,
+        label="Random Classifier (AUC = 0.5000)"
+    )
+
+    plt.xlabel("False Positive Rate (FPR)", fontsize=12)
+    plt.ylabel("True Positive Rate (TPR)", fontsize=12)
+    plt.title("ROC Curve - Model Comparison", fontsize=15)
+
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+
+    plt.legend(loc="lower right")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"[DONE] Đã lưu ROC Curve tại: {save_path}")
+
+    return auc_results
+
+
 def plot_confusion_matrix(cm, model_name, save_path):
-    """Vẽ và lưu ma trận nhầm lẫn của một mô hình."""
     plt.figure(figsize=(6, 5))
 
     sns.heatmap(
@@ -90,7 +215,6 @@ def plot_confusion_matrix(cm, model_name, save_path):
 
 
 def plot_all_confusion_matrices(results, save_path):
-    """Vẽ confusion matrix của các mô hình trên cùng một hình."""
     if not results:
         return
 
@@ -122,7 +246,6 @@ def plot_all_confusion_matrices(results, save_path):
 
 
 def load_data(split):
-    """Đọc dữ liệu Train hoặc Test."""
     x_joblib_path = PROCESSED_DIR / f"X_{split}.joblib"
     x_pkl_path = PROCESSED_DIR / f"X_{split}.pkl"
 
@@ -161,7 +284,6 @@ def load_data(split):
 
 
 def load_models():
-    """Tải ba mô hình đã được huấn luyện."""
     model_paths = {
         "Logistic Regression": MODEL_DIR / "model_lr.pkl",
         "Naive Bayes": MODEL_DIR / "model_nb.pkl",
@@ -231,6 +353,7 @@ def main():
         "F1",
         "TPR",
         "FPR",
+        "AUC",
         "TN",
         "FP",
         "FN",
@@ -255,6 +378,21 @@ def main():
             y_pred = model.predict(X)
             metrics = compute_metrics(y, y_pred)
 
+            roc_scores = get_roc_scores(model, X, model_name)
+
+            if len(np.unique(y)) == 2:
+                fpr_values, tpr_values, _ = roc_curve(
+                    y,
+                    roc_scores,
+                    pos_label=1
+                )
+
+                roc_auc = auc(fpr_values, tpr_values)
+            else:
+                roc_auc = np.nan
+
+            metrics["AUC"] = roc_auc
+
             print(
                 f"{dataset_name} | "
                 f"Accuracy: {metrics['Accuracy']:.4f} | "
@@ -262,7 +400,8 @@ def main():
                 f"Recall: {metrics['Recall']:.4f} | "
                 f"F1: {metrics['F1']:.4f} | "
                 f"TPR: {metrics['TPR']:.4f} | "
-                f"FPR: {metrics['FPR']:.4f}"
+                f"FPR: {metrics['FPR']:.4f} | "
+                f"AUC: {metrics['AUC']:.4f}"
             )
 
             row = {
@@ -275,7 +414,6 @@ def main():
 
             summary_rows.append(row)
 
-            # Chỉ lưu Confusion Matrix trên tập Test.
             if dataset_name == "Test":
                 test_results[model_name] = metrics
 
@@ -306,6 +444,7 @@ def main():
         "F1",
         "TPR",
         "FPR",
+        "AUC",
         "TN",
         "FP",
         "FN",
@@ -344,6 +483,15 @@ def main():
         f"{all_confusion_matrices_path}"
     )
 
+    roc_curve_path = IMAGE_DIR / "roc_curve_all.png"
+
+    auc_results = plot_roc_curve(
+        y_test,
+        models,
+        X_test,
+        roc_curve_path
+    )
+
     test_summary = summary[
         summary["Tập dữ liệu"] == "Test"
     ]
@@ -352,10 +500,30 @@ def main():
         test_summary["F1"].idxmax()
     ]
 
+    print("\n" + "=" * 55)
+    print("KẾT QUẢ ĐÁNH GIÁ CUỐI CÙNG")
+    print("=" * 55)
+
     print(
         f"[DONE] Mô hình tốt nhất theo F1 trên tập Test: "
         f"{best_row['Mô hình']} "
         f"(F1 = {best_row['F1']:.4f})"
+    )
+
+    print("\nSO SÁNH AUC:")
+
+    for model_name, roc_auc in auc_results.items():
+        print(f"{model_name}: AUC = {roc_auc:.4f}")
+
+    best_auc_model = max(
+        auc_results,
+        key=auc_results.get
+    )
+
+    print(
+        f"\n[DONE] Mô hình có AUC cao nhất: "
+        f"{best_auc_model} "
+        f"(AUC = {auc_results[best_auc_model]:.4f})"
     )
 
     print("\n" + "=" * 55)
