@@ -1,0 +1,8 @@
+[2026-11-04T22:56:34+07:00] [START] [EVALUATION] Bat dau danh gia cac mo hinh.
+[2026-11-04T22:56:34+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Train] Danh gia Logistic Regression tren Train hoan tat. F1=0.9262, AUC=0.9716
+[2026-11-04T22:56:34+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Test] Danh gia Logistic Regression tren Test hoan tat. F1=0.8944, AUC=0.9597
+[2026-11-04T22:56:35+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Train] Danh gia Naive Bayes tren Train hoan tat. F1=0.9938, AUC=1.0000
+[2026-11-04T22:56:35+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Test] Danh gia Naive Bayes tren Test hoan tat. F1=0.9554, AUC=0.9935
+[2026-11-04T22:56:35+07:00] [SUCCESS] [EVALUATION - SVM - Train] Danh gia SVM tren Train hoan tat. F1=0.1699, AUC=0.9748
+[2026-11-04T22:56:35+07:00] [SUCCESS] [EVALUATION - SVM - Test] Danh gia SVM tren Test hoan tat. F1=0.1654, AUC=0.9647
+[2026-11-04T22:56:36+07:00] [SUCCESS] [EVALUATION] Danh gia hoan tat trong 2.07 giay.

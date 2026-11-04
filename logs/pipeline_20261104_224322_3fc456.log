@@ -1,0 +1,5 @@
+[2026-11-04T22:43:22+07:00] [START] [TRAINING] Bat dau huan luyen mo hinh
+[2026-11-04T22:44:02+07:00] [SUCCESS] [TRAINING - Logistic Regression] Training completed in 40.15 seconds
+[2026-11-04T22:44:03+07:00] [SUCCESS] [TRAINING - Naive Bayes] Training completed in 0.25 seconds
+[2026-11-04T22:44:10+07:00] [SUCCESS] [TRAINING - SVM] Training completed in 7.61 seconds
+[2026-11-04T22:44:10+07:00] [SUCCESS] [TRAINING] Hoan thanh training trong 48.3185 giay

@@ -1,4 +1,3 @@
-
 import sys
 import time
 from pathlib import Path
@@ -9,13 +8,13 @@ import joblib
 import numpy as np
 import pandas as pd
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
 from src.model import LogisticRegression, NaiveBayes, SVM
+from src.tracking import create_run, update_progress, write_log, finish_run
 
 
 PROCESSED_DIR = ROOT_DIR / "data" / "processed"
@@ -124,72 +123,180 @@ def log_experiment(log_file, hyperparams, execution_times):
     print(f"[LOG] Đã lưu lịch sử thực nghiệm tại: {log_file}")
 
 
-def main():
-    X_train, y_train = load_train_data()
+def main(run_id=None):
+    own_run = run_id is None
 
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    if own_run:
+        run_id = create_run()
 
-    config = load_config()
-    model_config = config["models"]
+    start_time = time.perf_counter()
 
-    execution_times = {}
+    write_log(run_id, "TRAINING", "START", "Bat dau huan luyen mo hinh")
 
-    models = [
-        (
-            "Logistic Regression",
-            LogisticRegression(
-                learning_rate=model_config["logistic_regression"]["learning_rate"],
-                n_iterations=model_config["logistic_regression"]["n_iterations"]
+    try:
+        X_train, y_train = load_train_data()
+
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+        config = load_config()
+        model_config = config["models"]
+
+        execution_times = {}
+
+        models = [
+            (
+                "Logistic Regression",
+                LogisticRegression(
+                    learning_rate=model_config["logistic_regression"]["learning_rate"],
+                    n_iterations=model_config["logistic_regression"]["n_iterations"]
+                ),
+                MODEL_DIR / "model_lr.pkl",
+                model_config["logistic_regression"]
             ),
-            MODEL_DIR / "model_lr.pkl",
-        ),
-        (
-            "Naive Bayes",
-            NaiveBayes(),
-            MODEL_DIR / "model_nb.pkl",
-        ),
-        (
-            "SVM",
-            SVM(
-                learning_rate=model_config["svm"]["learning_rate"],
-                lambda_param=model_config["svm"]["lambda_param"],
-                n_iterations=model_config["svm"]["n_iterations"]
+            (
+                "Naive Bayes",
+                NaiveBayes(),
+                MODEL_DIR / "model_nb.pkl",
+                {}
             ),
-            MODEL_DIR / "model_svm.pkl",
-        ),
-    ]
+            (
+                "SVM",
+                SVM(
+                    learning_rate=model_config["svm"]["learning_rate"],
+                    lambda_param=model_config["svm"]["lambda_param"],
+                    n_iterations=model_config["svm"]["n_iterations"]
+                ),
+                MODEL_DIR / "model_svm.pkl",
+                model_config["svm"]
+            ),
+        ]
 
-    print("\n" + "=" * 55)
-    print("BẮT ĐẦU HUẤN LUYỆN 3 MÔ HÌNH (FROM SCRATCH)")
-    print("=" * 55)
+        print("\n" + "=" * 55)
+        print("BẮT ĐẦU HUẤN LUYỆN 3 MÔ HÌNH (FROM SCRATCH)")
+        print("=" * 55)
 
-    for model_name, model, save_path in models:
-        print(f"\n[TRAIN] Đang huấn luyện mô hình: {model_name}...")
+        for model_name, model, save_path, parameters in models:
+            print(f"\n[TRAIN] Đang huấn luyện mô hình: {model_name}...")
 
-        start_time = time.time()
+            model_start = time.perf_counter()
 
-        model.fit(X_train, y_train)
+            try:
+                model.fit(X_train, y_train)
 
-        elapsed_time = time.time() - start_time
-        execution_times[model_name] = elapsed_time
+                elapsed_time = time.perf_counter() - model_start
+                execution_times[model_name] = elapsed_time
 
-        joblib.dump(model, save_path)
+                joblib.dump(model, save_path)
 
-        print(
-            f"[DONE] Hoàn thành {model_name} "
-            f"trong {elapsed_time:.2f} giây."
+                print(
+                    f"[DONE] Hoàn thành {model_name} "
+                    f"trong {elapsed_time:.2f} giây."
+                )
+                print(f"[SAVE] Đã lưu mô hình tại: {save_path}")
+
+                # Luu ket qua tung mo hinh
+                update_progress(
+                    run_id,
+                    f"TRAINING - {model_name}",
+                    "SUCCESS",
+                    input_data={
+                        "train_shape": list(X_train.shape),
+                        "label_shape": list(y_train.shape),
+                        "parameters": parameters
+                    },
+                    output_data={
+                        "model_name": model_name,
+                        "status": "TRAINED",
+                        "train_samples": X_train.shape[0],
+                        "features": X_train.shape[1],
+                        "training_time_seconds": round(elapsed_time, 4),
+                        "saved_model": str(save_path)
+                    }
+                )
+
+                write_log(
+                    run_id,
+                    f"TRAINING - {model_name}",
+                    "SUCCESS",
+                    f"Training completed in {elapsed_time:.2f} seconds"
+                )
+
+            except Exception as error:
+                update_progress(
+                    run_id,
+                    f"TRAINING - {model_name}",
+                    "FAILED",
+                    input_data={
+                        "train_shape": list(X_train.shape),
+                        "parameters": parameters
+                    },
+                    error=str(error)
+                )
+
+                write_log(
+                    run_id,
+                    f"TRAINING - {model_name}",
+                    "FAILED",
+                    str(error)
+                )
+
+                raise
+
+        # Luu lich su thuc nghiem
+        log_experiment(LOG_FILE, model_config, execution_times)
+
+        total_time = round(time.perf_counter() - start_time, 4)
+
+        # Luu tong ket qua training
+        update_progress(
+            run_id,
+            "TRAINING",
+            "SUCCESS",
+            input_data={
+                "train_samples": X_train.shape[0],
+                "features": X_train.shape[1],
+                "models": list(execution_times.keys())
+            },
+            output_data={
+                "execution_times": {
+                    name: round(value, 4)
+                    for name, value in execution_times.items()
+                },
+                "total_training_time": total_time,
+                "saved_models": [
+                    "models/model_lr.pkl",
+                    "models/model_nb.pkl",
+                    "models/model_svm.pkl"
+                ],
+                "experiment_log": "docs/experiment_logs.csv"
+            }
         )
-        print(f"[SAVE] Đã lưu mô hình tại: {save_path}")
 
-    log_experiment(LOG_FILE, model_config, execution_times)
+        write_log(
+            run_id,
+            "TRAINING",
+            "SUCCESS",
+            f"Hoan thanh training trong {total_time} giay"
+        )
 
-    print("\n" + "=" * 55)
-    print("HOÀN TẤT QUÁ TRÌNH HUẤN LUYỆN VÀ LƯU MÔ HÌNH!")
-    print(
-        f"Tổng thời gian huấn luyện: "
-        f"{sum(execution_times.values()):.2f} giây"
-    )
-    print("=" * 55)
+        print("\n" + "=" * 55)
+        print("HOÀN TẤT QUÁ TRÌNH HUẤN LUYỆN VÀ LƯU MÔ HÌNH!")
+        print(
+            f"Tổng thời gian huấn luyện: "
+            f"{sum(execution_times.values()):.2f} giây"
+        )
+        print("=" * 55)
+
+        if own_run:
+            finish_run(run_id)
+
+    except Exception as error:
+        write_log(run_id, "TRAINING", "FAILED", str(error))
+
+        if own_run:
+            finish_run(run_id, "FAILED")
+
+        raise
 
 
 if __name__ == "__main__":

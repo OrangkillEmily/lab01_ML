@@ -1,0 +1,129 @@
+{
+    "run_id": "20261104_230111_3539c6",
+    "start_time": "2026-11-04T23:01:11+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "PREDICTION - TEXT CLEANING",
+            "timestamp": "2026-11-04T23:01:11+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "raw_text": "Congratulations! You won a free prize. Click here now!",
+                "input_length": 54
+            },
+            "output": {
+                "cleaned_text": "congratulations you won a free prize click here now",
+                "cleaned_length": 51,
+                "cleaning_time_seconds": 0.0004
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - TF-IDF",
+            "timestamp": "2026-11-04T23:01:11+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "cleaned_text": "congratulations you won a free prize click here now"
+            },
+            "output": {
+                "feature_shape": [
+                    1,
+                    10000
+                ],
+                "samples": 1,
+                "features": 10000,
+                "tfidf_time_seconds": 0.0009
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - Logistic Regression",
+            "timestamp": "2026-11-04T23:01:11+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Logistic Regression",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 1,
+                "label": "Spam",
+                "prediction_time_seconds": 0.0002
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - Naive Bayes",
+            "timestamp": "2026-11-04T23:01:11+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Naive Bayes",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 1,
+                "label": "Spam",
+                "prediction_time_seconds": 0.0006
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - SVM",
+            "timestamp": "2026-11-04T23:01:12+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "SVM",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 0,
+                "label": "Ham",
+                "prediction_time_seconds": 0.0001
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION",
+            "timestamp": "2026-11-04T23:01:12+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "models": [
+                    "Logistic Regression",
+                    "Naive Bayes",
+                    "SVM"
+                ],
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "predictions": {
+                    "Logistic Regression": {
+                        "prediction": 1,
+                        "label": "Spam"
+                    },
+                    "Naive Bayes": {
+                        "prediction": 1,
+                        "label": "Spam"
+                    },
+                    "SVM": {
+                        "prediction": 0,
+                        "label": "Ham"
+                    }
+                },
+                "total_prediction_time_seconds": 0.0798
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-04T23:01:12+07:00"
+}
