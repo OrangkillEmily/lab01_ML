@@ -1,4 +1,6 @@
-import re
+import argparse
+import csv
+import json
 import sys
 import time
 from pathlib import Path
@@ -6,13 +8,12 @@ from datetime import datetime
 
 import joblib
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-
+from src.preprocess import clean_text
 from src.tracking import (
     create_run,
     update_progress,
@@ -20,24 +21,12 @@ from src.tracking import (
     finish_run
 )
 
-
 MODEL_DIR = ROOT_DIR / "models"
+REPORT_DIR = ROOT_DIR / "reports"
+HISTORY_PATH = REPORT_DIR / "inference_history.csv"
 
 
-def clean_text(text):
-    """Lam sach email giong preprocess.py."""
-    text = str(text).lower()
-
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"http\S+|www\.\S+", " ", text)
-    text = re.sub(r"[^a-z\s]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
-
-
-def load_model(filename):
-    """Tai vectorizer hoac mo hinh."""
+def load_model(filename, verbose=True):
     path = MODEL_DIR / filename
 
     if not path.exists():
@@ -45,38 +34,86 @@ def load_model(filename):
             f"Khong tim thay file: {path}"
         )
 
-    print(f"[INFO] Dang tai: {filename}")
+    if verbose:
+        print(f"[INFO] Dang tai: {filename}")
+
     return joblib.load(path)
 
 
-def load_models():
-    """Tai TF-IDF va ba mo hinh."""
-    vectorizer = load_model("tfidf_vectorizer.pkl")
+def load_models(verbose=True):
+    vectorizer = load_model(
+        "tfidf_vectorizer.pkl", verbose
+    )
 
     models = {
-        "Logistic Regression": load_model("model_lr.pkl"),
-        "Naive Bayes": load_model("model_nb.pkl"),
-        "SVM": load_model("model_svm.pkl"),
+        "Logistic Regression": load_model(
+            "model_lr.pkl", verbose
+        ),
+        "Naive Bayes": load_model(
+            "model_nb.pkl", verbose
+        ),
+        "SVM": load_model(
+            "model_svm.pkl", verbose
+        ),
     }
 
     return vectorizer, models
 
 
 def decode_label(prediction):
-    """Chuyen nhan so thanh Spam hoac Ham."""
     prediction = int(prediction)
 
     if prediction == 1:
         return "Spam"
-    elif prediction == 0:
+
+    if prediction == 0:
         return "Ham"
-    else:
-        return f"Nhãn không xác định: {prediction}"
+
+    return f"Nhãn không xác định: {prediction}"
+
+
+def save_inference_history(result):
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    predictions = result["output"]["predictions"]
+
+    row = {
+        "timestamp": result["timestamp"],
+        "run_id": result["run_id"],
+        "email": result["input"]["raw_text"],
+        "cleaned_email": result["input"]["cleaned_text"],
+        "logistic_regression": predictions[
+            "Logistic Regression"
+        ]["label"],
+        "naive_bayes": predictions[
+            "Naive Bayes"
+        ]["label"],
+        "svm": predictions["SVM"]["label"],
+        "total_time_seconds": result["output"][
+            "total_prediction_time_seconds"
+        ],
+    }
+
+    file_exists = HISTORY_PATH.exists()
+
+    with open(
+        HISTORY_PATH,
+        "a",
+        newline="",
+        encoding="utf-8-sig"
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=list(row.keys())
+        )
+
+        if not file_exists:
+            writer.writeheader()
+
+        writer.writerow(row)
 
 
 def predict_email(email, vectorizer, models, run_id=None):
-    """Du doan email bang ba mo hinh va ghi tracking."""
-
     is_new_run = run_id is None
 
     if is_new_run:
@@ -85,13 +122,13 @@ def predict_email(email, vectorizer, models, run_id=None):
     start_time = time.perf_counter()
 
     try:
-        # Step 1: Kiem tra va lam sach email
-        step_start = time.perf_counter()
-
         if not isinstance(email, str) or not email.strip():
             raise ValueError(
                 "Noi dung email khong duoc de trong."
             )
+
+        # Làm sạch email
+        step_start = time.perf_counter()
 
         cleaned_email = clean_text(email)
 
@@ -107,14 +144,13 @@ def predict_email(email, vectorizer, models, run_id=None):
             "PREDICTION - TEXT CLEANING",
             "SUCCESS",
             input_data={
-                "raw_text": email,
                 "input_length": len(email)
             },
             output_data={
                 "cleaned_text": cleaned_email,
                 "cleaned_length": len(cleaned_email),
                 "cleaning_time_seconds": round(
-                    cleaning_time, 4
+                    cleaning_time, 6
                 )
             }
         )
@@ -126,7 +162,7 @@ def predict_email(email, vectorizer, models, run_id=None):
             "Da lam sach email thanh cong."
         )
 
-        # Step 2: Chuyen email sang TF-IDF
+        # Chuyển email sang TF-IDF
         step_start = time.perf_counter()
 
         X = vectorizer.transform([cleaned_email])
@@ -137,15 +173,12 @@ def predict_email(email, vectorizer, models, run_id=None):
             run_id,
             "PREDICTION - TF-IDF",
             "SUCCESS",
-            input_data={
-                "cleaned_text": cleaned_email
-            },
             output_data={
                 "feature_shape": list(X.shape),
                 "samples": int(X.shape[0]),
                 "features": int(X.shape[1]),
                 "tfidf_time_seconds": round(
-                    tfidf_time, 4
+                    tfidf_time, 6
                 )
             }
         )
@@ -157,28 +190,24 @@ def predict_email(email, vectorizer, models, run_id=None):
             f"Vector TF-IDF co kich thuoc {X.shape}."
         )
 
-        print("\nNoi dung sau khi lam sach:")
-        print(cleaned_email)
-
-        print("\nKich thuoc vector TF-IDF:")
-        print(X.shape)
-
-        # Step 3: Du doan bang cac mo hinh
+        # Dự đoán bằng từng mô hình
         predictions = {}
-
-        print("\nKet qua du doan:")
 
         for model_name, model in models.items():
             step_start = time.perf_counter()
 
             prediction = model.predict(X)[0]
-            result = decode_label(prediction)
 
-            prediction_time = time.perf_counter() - step_start
+            prediction_time = (
+                time.perf_counter() - step_start
+            )
 
             predictions[model_name] = {
                 "prediction": int(prediction),
-                "label": result
+                "label": decode_label(prediction),
+                "prediction_time_seconds": round(
+                    prediction_time, 6
+                )
             }
 
             update_progress(
@@ -189,25 +218,16 @@ def predict_email(email, vectorizer, models, run_id=None):
                     "model_name": model_name,
                     "feature_shape": list(X.shape)
                 },
-                output_data={
-                    "prediction": int(prediction),
-                    "label": result,
-                    "prediction_time_seconds": round(
-                        prediction_time, 4
-                    )
-                }
+                output_data=predictions[model_name]
             )
 
             write_log(
                 run_id,
                 model_name,
                 "SUCCESS",
-                f"Du doan: {result}."
+                f"Du doan: {decode_label(prediction)}."
             )
 
-            print(f"{model_name}: {result}")
-
-        # Step 4: Tong hop ket qua
         total_time = time.perf_counter() - start_time
 
         result = {
@@ -222,9 +242,15 @@ def predict_email(email, vectorizer, models, run_id=None):
             },
             "output": {
                 "feature_shape": list(X.shape),
+                "cleaning_time_seconds": round(
+                    cleaning_time, 6
+                ),
+                "tfidf_time_seconds": round(
+                    tfidf_time, 6
+                ),
                 "predictions": predictions,
                 "total_prediction_time_seconds": round(
-                    total_time, 4
+                    total_time, 6
                 )
             }
         }
@@ -237,12 +263,7 @@ def predict_email(email, vectorizer, models, run_id=None):
                 "models": list(models.keys()),
                 "feature_shape": list(X.shape)
             },
-            output_data={
-                "predictions": predictions,
-                "total_prediction_time_seconds": round(
-                    total_time, 4
-                )
-            }
+            output_data=result["output"]
         )
 
         write_log(
@@ -251,6 +272,8 @@ def predict_email(email, vectorizer, models, run_id=None):
             "SUCCESS",
             "Hoan thanh du doan email bang tat ca mo hinh."
         )
+
+        save_inference_history(result)
 
         if is_new_run:
             finish_run(run_id, "SUCCESS")
@@ -264,13 +287,9 @@ def predict_email(email, vectorizer, models, run_id=None):
             run_id,
             "PREDICTION",
             "FAILED",
-            input_data={
-                "email_length": len(email)
-                if isinstance(email, str) else None
-            },
             output_data={
                 "total_time_seconds": round(
-                    error_time, 4
+                    error_time, 6
                 )
             },
             error=str(error)
@@ -289,25 +308,118 @@ def predict_email(email, vectorizer, models, run_id=None):
         raise
 
 
+def display_result(result):
+    print("\nNoi dung sau khi lam sach:")
+    print(result["input"]["cleaned_text"])
+
+    print("\nKich thuoc vector TF-IDF:")
+    print(tuple(result["output"]["feature_shape"]))
+
+    print("\nKet qua du doan:")
+
+    for model_name, prediction in result["output"][
+        "predictions"
+    ].items():
+        print(
+            f"{model_name}: {prediction['label']} "
+            f"({prediction['prediction_time_seconds']:.6f}s)"
+        )
+
+    print("\nTrang thai:", result["status"])
+    print("Run ID:", result["run_id"])
+
+    print(
+        "Tong thoi gian du doan:",
+        result["output"]["total_prediction_time_seconds"],
+        "giay"
+    )
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    print("=" * 50)
-    print("SPAMASSASSIN - EMAIL SPAM PREDICTION")
-    print("=" * 50)
+    parser = argparse.ArgumentParser(
+        description="Du doan email Spam/Ham bang 3 mo hinh."
+    )
+
+    parser.add_argument(
+        "--text",
+        type=str,
+        help="Noi dung email can du doan."
+    )
+
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Xuat ket qua duoi dang JSON."
+    )
+
+    args = parser.parse_args()
+
+    if not args.json:
+        print("=" * 50)
+        print("SPAMASSASSIN - EMAIL SPAM PREDICTION")
+        print("=" * 50)
 
     try:
-        vectorizer, models = load_models()
+        vectorizer, models = load_models(
+            verbose=not args.json
+        )
 
     except Exception as error:
-        print(f"[ERROR] Khong the tai mo hinh: {error}")
+        if args.json:
+            print(json.dumps({
+                "status": "FAILED",
+                "error": str(error)
+            }, ensure_ascii=False))
+        else:
+            print(f"[ERROR] Khong the tai mo hinh: {error}")
+
+        sys.exit(1)
+
+    def process_email(email):
+        try:
+            result = predict_email(
+                email,
+                vectorizer,
+                models
+            )
+
+            if args.json:
+                print(
+                    json.dumps(
+                        result,
+                        ensure_ascii=False,
+                        indent=4
+                    )
+                )
+            else:
+                display_result(result)
+
+        except Exception as error:
+            if args.json:
+                print(json.dumps({
+                    "status": "FAILED",
+                    "error": str(error)
+                }, ensure_ascii=False))
+            else:
+                print(f"[ERROR] Khong the du doan: {error}")
+
+    # Chế độ dự đoán một email
+    if args.text is not None:
+        process_email(args.text)
         return
 
+    # Chế độ nhập email liên tục
     while True:
-        email = input(
-            "\nNhap email (go 'exit' de thoat): "
-        ).strip()
+        try:
+            email = input(
+                "\nNhap email (go 'exit' de thoat): "
+            ).strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nKet thuc chuong trinh.")
+            break
 
         if email.lower() == "exit":
             print("Ket thuc chuong trinh.")
@@ -317,18 +429,7 @@ def main():
             print("Vui long nhap noi dung email.")
             continue
 
-        try:
-            result = predict_email(
-                email,
-                vectorizer,
-                models
-            )
-
-            print("\nTrang thai:", result["status"])
-            print("Run ID:", result["run_id"])
-
-        except Exception as error:
-            print(f"[ERROR] Khong the du doan: {error}")
+        process_email(email)
 
 
 if __name__ == "__main__":

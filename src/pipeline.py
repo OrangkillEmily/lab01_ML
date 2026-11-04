@@ -4,12 +4,10 @@ import time
 import traceback
 from pathlib import Path
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
-
 
 from src import eda, evaluate, preprocess, train
 from src.tracking import (
@@ -24,7 +22,6 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    # Cau hinh cac tuy chon khi chay pipeline
     parser = argparse.ArgumentParser(
         description="Chay toan bo quy trinh may hoc."
     )
@@ -49,7 +46,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Tao run_id chung cho toan bo pipeline
     run_id = create_run()
 
     steps = [
@@ -58,6 +54,9 @@ def main():
         ("TRAINING", train.main, args.skip_train),
         ("EVALUATION", evaluate.main, False)
     ]
+
+    completed_steps = []
+    skipped_steps = []
 
     total_start_time = time.perf_counter()
 
@@ -73,13 +72,14 @@ def main():
     )
 
     try:
-        # Chay lan luot cac buoc
         for step_number, (step_name, step_function, skip) in enumerate(
             steps, start=1
         ):
 
             if skip:
                 print(f"\n[BO QUA] {step_name}")
+
+                skipped_steps.append(step_name)
 
                 update_progress(
                     run_id,
@@ -115,7 +115,6 @@ def main():
             )
 
             try:
-                # Truyen run_id chung vao tung buoc
                 step_function(run_id)
 
             except Exception as error:
@@ -144,6 +143,8 @@ def main():
 
             elapsed_time = time.perf_counter() - step_start_time
 
+            completed_steps.append(step_name)
+
             print(
                 f"[DONE] Hoan thanh trong {elapsed_time:.2f} giay"
             )
@@ -155,7 +156,6 @@ def main():
                 f"Hoan thanh trong {elapsed_time:.2f} giay."
             )
 
-        # Tong hop ket qua pipeline
         total_elapsed_time = time.perf_counter() - total_start_time
 
         update_progress(
@@ -166,15 +166,12 @@ def main():
                 "total_execution_time_seconds": round(
                     total_elapsed_time, 4
                 ),
-                "completed_steps": [
-                    step_name
-                    for step_name, _, skip in steps
-                    if not skip
-                ]
+                "completed_steps": completed_steps,
+                "skipped_steps": skipped_steps,
+                "total_steps": len(steps),
+                "successful_steps": len(completed_steps)
             }
         )
-
-        finish_run(run_id, "SUCCESS")
 
         write_log(
             run_id,
@@ -184,9 +181,16 @@ def main():
             f"{total_elapsed_time:.2f} giay."
         )
 
+        finish_run(run_id, "SUCCESS")
+
         print("\n" + "=" * 55)
         print("[DONE] QUY TRINH MAY HOC HOAN TAT")
         print(f"[INFO] Run ID: {run_id}")
+        print(
+            f"[INFO] Cac buoc thanh cong: "
+            f"{len(completed_steps)}/{len(steps)}"
+        )
+        print(f"[INFO] Da bo qua: {skipped_steps}")
         print(
             f"[INFO] Tong thoi gian: "
             f"{total_elapsed_time:.2f} giay"
@@ -206,12 +210,12 @@ def main():
             output_data={
                 "total_execution_time_seconds": round(
                     total_elapsed_time, 4
-                )
+                ),
+                "completed_steps": completed_steps,
+                "skipped_steps": skipped_steps
             },
             error=str(error)
         )
-
-        finish_run(run_id, "FAILED")
 
         write_log(
             run_id,
@@ -219,6 +223,8 @@ def main():
             "FAILED",
             str(error)
         )
+
+        finish_run(run_id, "FAILED")
 
         print(
             f"\n[ERROR] Pipeline that bai: {error}",

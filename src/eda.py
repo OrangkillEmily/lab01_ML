@@ -4,7 +4,18 @@ import time
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from tracking import create_run, update_progress, write_log, finish_run
+from src.tracking import (
+    create_run,
+    update_progress,
+    write_log,
+    finish_run
+)
+from src.visualize import (
+    create_stage_dir,
+    save_label_distribution,
+    save_missing_values,
+    save_email_length_distribution
+)
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "raw" / "SpamAssassin.csv"
@@ -23,23 +34,40 @@ def main(run_id=None):
     write_log(run_id, "EDA", "START", "Bat dau phan tich du lieu")
 
     try:
+        # Doc du lieu
         df = pd.read_csv(DATA_PATH)
+
+        # Luu kich thuoc du lieu goc
+        dataset_shape = list(df.shape)
 
         REPORT_DIR.mkdir(parents=True, exist_ok=True)
         IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
+        # Tao thu muc hinh rieng cho run hien tai
+        figure_dir = create_stage_dir(run_id, "eda")
+
         print("Kich thuoc du lieu:", df.shape)
         print("\nCac cot:", df.columns.tolist())
 
+        # Thong ke gia tri thieu
         print("\nSo gia tri thieu:")
-        missing_values = df[["label", "data", "filename"]].isnull().sum()
+
+        missing_values = df[
+            ["label", "data", "filename"]
+        ].isnull().sum()
+
         print(missing_values)
 
+        # Thong ke dong trung lap
         duplicate_rows = int(df.duplicated().sum())
+
         print("\nSo dong trung lap:", duplicate_rows)
 
+        # Thong ke phan bo nhan
         print("\nPhan bo nhan:")
+
         label_distribution = df["label"].value_counts().sort_index()
+
         print(label_distribution)
 
         # Luu thong ke nhan vao reports/
@@ -48,7 +76,38 @@ def main(run_id=None):
             header=["count"]
         )
 
-        # Ve bieu do phan bo nhan
+        # Hinh 1: Phan bo nhan
+        save_label_distribution(
+            label_distribution,
+            figure_dir
+        )
+
+        # Hinh 2: Gia tri thieu
+        save_missing_values(
+            missing_values,
+            figure_dir
+        )
+
+        # Hinh 3: Phan phoi do dai email
+        df["email_length"] = (
+            df["data"]
+            .fillna("")
+            .astype(str)
+            .str.len()
+        )
+
+        print("\nThong ke do dai email:")
+
+        email_length = df["email_length"].describe()
+
+        print(email_length)
+
+        save_email_length_distribution(
+            df["email_length"],
+            figure_dir
+        )
+
+        # Giu lai bieu do phan bo nhan o vi tri cu
         label_distribution.plot(
             kind="bar",
             figsize=(7, 5)
@@ -60,25 +119,26 @@ def main(run_id=None):
         plt.xticks(rotation=0)
         plt.tight_layout()
 
-        # Luu bieu do vao docs/images/
         plt.savefig(
             IMAGE_DIR / "label_distribution.png",
             dpi=300,
             bbox_inches="tight"
         )
+
         plt.close()
-
-        # Thong ke do dai email
-        df["email_length"] = df["data"].fillna("").astype(str).str.len()
-
-        print("\nThong ke do dai email:")
-        email_length = df["email_length"].describe()
-        print(email_length)
 
         print("\nDa luu file CSV trong thu muc reports/")
         print("Da luu bieu do trong thu muc docs/images/")
+        print("Da luu bo hinh EDA tai:", figure_dir)
 
         duration = round(time.perf_counter() - start_time, 4)
+
+        # Danh sach hinh da tao
+        saved_figures = [
+            str(figure_dir / "label_distribution.png"),
+            str(figure_dir / "missing_values.png"),
+            str(figure_dir / "email_length_distribution.png")
+        ]
 
         # Luu ket qua EDA vao progress_results/
         update_progress(
@@ -89,8 +149,12 @@ def main(run_id=None):
                 "dataset": str(DATA_PATH)
             },
             output_data={
-                "dataset_shape": list(df.shape),
-                "columns": df.columns.tolist(),
+                "dataset_shape": dataset_shape,
+                "columns": [
+                    "label",
+                    "data",
+                    "filename"
+                ],
                 "missing_values": missing_values.to_dict(),
                 "duplicate_rows": duplicate_rows,
                 "label_distribution": label_distribution.to_dict(),
@@ -99,6 +163,7 @@ def main(run_id=None):
                     "reports/label_distribution.csv",
                     "docs/images/label_distribution.png"
                 ],
+                "saved_figures": saved_figures,
                 "duration_seconds": duration
             }
         )
@@ -122,7 +187,12 @@ def main(run_id=None):
             error=str(error)
         )
 
-        write_log(run_id, "EDA", "FAILED", str(error))
+        write_log(
+            run_id,
+            "EDA",
+            "FAILED",
+            str(error)
+        )
 
         if own_run:
             finish_run(run_id, "FAILED")

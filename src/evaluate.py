@@ -21,6 +21,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from src.model import LogisticRegression, NaiveBayes, SVM  # noqa: F401
+from src.visualize import create_stage_dir
 from src.tracking import (
     create_run,
     update_progress,
@@ -33,6 +34,26 @@ PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 MODEL_DIR = ROOT_DIR / "models"
 REPORT_DIR = ROOT_DIR / "reports"
 IMAGE_DIR = ROOT_DIR / "docs" / "images"
+
+METRICS_FILE = REPORT_DIR / "metrics_summary.csv"
+
+METRIC_COLUMNS = [
+    "Mô hình",
+    "Tập dữ liệu",
+    "Accuracy",
+    "Precision",
+    "Recall",
+    "F1",
+    "TPR",
+    "FPR",
+    "AUC",
+    "TN",
+    "FP",
+    "FN",
+    "TP",
+]
+
+SUMMARY_COLUMNS = ["Run_ID"] + METRIC_COLUMNS
 
 
 def compute_metrics(y_true, y_pred):
@@ -218,6 +239,7 @@ def plot_confusion_matrix(cm, model_name, save_path):
     plt.ylabel("Thực tế")
     plt.title(f"Confusion Matrix - {model_name}")
     plt.tight_layout()
+
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
 
@@ -251,6 +273,116 @@ def plot_all_confusion_matrices(results, save_path):
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
+
+
+def plot_metric_comparison(test_results, save_path):
+    """So sánh Accuracy, Precision, Recall và F1 trên tập Test."""
+
+    if not test_results:
+        return
+
+    metric_names = [
+        "Accuracy",
+        "Precision",
+        "Recall",
+        "F1"
+    ]
+
+    model_names = list(test_results.keys())
+
+    x = np.arange(len(metric_names))
+    width = 0.24
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    for index, model_name in enumerate(model_names):
+        values = [
+            test_results[model_name][metric]
+            for metric in metric_names
+        ]
+
+        positions = x + (
+            index - (len(model_names) - 1) / 2
+        ) * width
+
+        bars = ax.bar(
+            positions,
+            values,
+            width,
+            label=model_name
+        )
+
+        ax.bar_label(
+            bars,
+            fmt="%.3f",
+            fontsize=8,
+            padding=2
+        )
+
+    ax.set_title("Test Set Metrics Comparison")
+    ax.set_ylabel("Score")
+    ax.set_xticks(x)
+    ax.set_xticklabels(metric_names)
+    ax.set_ylim(0, 1.12)
+    ax.legend()
+    ax.grid(axis="y", alpha=0.25)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_tpr_fpr_comparison(test_results, save_path):
+    """So sánh TPR và FPR trên tập Test."""
+
+    if not test_results:
+        return
+
+    model_names = list(test_results.keys())
+
+    x = np.arange(len(model_names))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+
+    tpr_values = [
+        test_results[name]["TPR"]
+        for name in model_names
+    ]
+
+    fpr_values = [
+        test_results[name]["FPR"]
+        for name in model_names
+    ]
+
+    tpr_bars = ax.bar(
+        x - width / 2,
+        tpr_values,
+        width,
+        label="TPR"
+    )
+
+    fpr_bars = ax.bar(
+        x + width / 2,
+        fpr_values,
+        width,
+        label="FPR"
+    )
+
+    ax.bar_label(tpr_bars, fmt="%.3f", padding=2)
+    ax.bar_label(fpr_bars, fmt="%.3f", padding=2)
+
+    ax.set_title("TPR and FPR Comparison on Test Set")
+    ax.set_ylabel("Rate")
+    ax.set_xticks(x)
+    ax.set_xticklabels(model_names)
+    ax.set_ylim(0, 1.12)
+    ax.legend()
+    ax.grid(axis="y", alpha=0.25)
+
+    fig.tight_layout()
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
 
 
 def load_data(split):
@@ -319,11 +451,99 @@ def load_models():
     }
 
 
+def save_metrics(summary, run_id):
+    """
+    Lưu metrics theo từng Run_ID.
+
+    - Giữ lại kết quả của các lần chạy trước.
+    - Dữ liệu cũ chưa có Run_ID được gán LEGACY.
+    - Nếu Run_ID đã tồn tại thì thay thế kết quả của lần chạy đó.
+    """
+
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    current_summary = summary.copy()
+    current_summary.insert(0, "Run_ID", str(run_id))
+
+    # Đọc dữ liệu cũ nếu file đã tồn tại
+    if METRICS_FILE.exists():
+        try:
+            old_summary = pd.read_csv(
+                METRICS_FILE,
+                encoding="utf-8-sig"
+            )
+
+            if not old_summary.empty:
+                # Dữ liệu cũ chưa có Run_ID
+                if "Run_ID" not in old_summary.columns:
+                    old_summary.insert(
+                        0,
+                        "Run_ID",
+                        "LEGACY"
+                    )
+
+                # Bổ sung những cột còn thiếu để thống nhất schema
+                for column in SUMMARY_COLUMNS:
+                    if column not in old_summary.columns:
+                        old_summary[column] = np.nan
+
+                old_summary = old_summary[SUMMARY_COLUMNS]
+
+            else:
+                old_summary = pd.DataFrame(
+                    columns=SUMMARY_COLUMNS
+                )
+
+        except pd.errors.EmptyDataError:
+            old_summary = pd.DataFrame(
+                columns=SUMMARY_COLUMNS
+            )
+
+    else:
+        old_summary = pd.DataFrame(
+            columns=SUMMARY_COLUMNS
+        )
+
+    # Loại bỏ kết quả cũ của chính Run_ID hiện tại
+    if not old_summary.empty:
+        old_summary = old_summary[
+            old_summary["Run_ID"].astype(str) != str(run_id)
+        ]
+
+    # Gộp dữ liệu cũ và dữ liệu mới
+    combined_summary = pd.concat(
+        [
+            old_summary,
+            current_summary
+        ],
+        ignore_index=True
+    )
+
+    combined_summary = combined_summary[SUMMARY_COLUMNS]
+
+    # Lưu lại toàn bộ lịch sử metrics
+    combined_summary.to_csv(
+        METRICS_FILE,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    print(
+        f"[DONE] Đã lưu metrics cho Run_ID: {run_id}"
+    )
+
+    print(
+        f"[INFO] Tổng số dòng metrics hiện tại: "
+        f"{len(combined_summary)}"
+    )
+
+    return METRICS_FILE
+
+
 def main(run_id=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
 
-    # Tao run moi neu chay rieng evaluate.py
     own_run = run_id is None
 
     if own_run:
@@ -334,6 +554,11 @@ def main(run_id=None):
     try:
         REPORT_DIR.mkdir(parents=True, exist_ok=True)
         IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+        evaluation_figure_dir = create_stage_dir(
+            run_id,
+            "evaluation"
+        )
 
         write_log(
             run_id,
@@ -370,20 +595,6 @@ def main(run_id=None):
             "SVM": "svm",
         }
 
-        metric_columns = [
-            "Accuracy",
-            "Precision",
-            "Recall",
-            "F1",
-            "TPR",
-            "FPR",
-            "AUC",
-            "TN",
-            "FP",
-            "FN",
-            "TP",
-        ]
-
         summary_rows = []
         test_results = {}
 
@@ -392,7 +603,7 @@ def main(run_id=None):
             "Test": (X_test, y_test),
         }
 
-        # Danh gia tung mo hinh tren Train va Test
+        # Đánh giá từng mô hình trên Train và Test
         for model_name, model in models.items():
             for dataset_name, (X, y) in datasets.items():
 
@@ -448,24 +659,32 @@ def main(run_id=None):
                         f"AUC: {metrics['AUC']:.4f}"
                     )
 
-                    # Luu ket qua vao bang tong hop
                     row = {
                         "Mô hình": model_name,
                         "Tập dữ liệu": dataset_name,
                     }
 
-                    for column in metric_columns:
+                    for column in METRIC_COLUMNS[2:]:
                         row[column] = metrics[column]
 
                     summary_rows.append(row)
 
-                    # Chi luu confusion matrix cho tap Test
+                    # Chỉ lưu Confusion Matrix của tập Test
                     if dataset_name == "Test":
                         test_results[model_name] = metrics
 
-                        confusion_matrix_path = IMAGE_DIR / (
+                        confusion_matrix_name = (
                             f"confusion_matrix_"
                             f"{model_suffixes[model_name]}.png"
+                        )
+
+                        confusion_matrix_path = (
+                            evaluation_figure_dir
+                            / confusion_matrix_name
+                        )
+
+                        legacy_confusion_matrix_path = (
+                            IMAGE_DIR / confusion_matrix_name
                         )
 
                         plot_confusion_matrix(
@@ -474,12 +693,18 @@ def main(run_id=None):
                             confusion_matrix_path
                         )
 
+                        plot_confusion_matrix(
+                            metrics["cm"],
+                            model_name,
+                            legacy_confusion_matrix_path
+                        )
+
                         print(
                             f"[DONE] Đã lưu confusion matrix tại: "
                             f"{confusion_matrix_path}"
                         )
 
-                    # Ghi ket qua tung lan danh gia
+                    # Lưu kết quả vào progress_results
                     metric_data = {
                         "Accuracy": float(metrics["Accuracy"]),
                         "Precision": float(metrics["Precision"]),
@@ -522,8 +747,8 @@ def main(run_id=None):
                         step_name,
                         "SUCCESS",
                         f"Danh gia {model_name} tren {dataset_name} "
-                        f'hoan tat. F1={metrics["F1"]:.4f}, '
-                        f'AUC={metrics["AUC"]:.4f}'
+                        f"hoan tat. F1={metrics['F1']:.4f}, "
+                        f"AUC={metrics['AUC']:.4f}"
                     )
 
                 except Exception as error:
@@ -547,26 +772,11 @@ def main(run_id=None):
 
                     raise
 
-        # Tao bang tong hop ket qua
-        summary = pd.DataFrame(summary_rows)
-
-        columns = [
-            "Mô hình",
-            "Tập dữ liệu",
-            "Accuracy",
-            "Precision",
-            "Recall",
-            "F1",
-            "TPR",
-            "FPR",
-            "AUC",
-            "TN",
-            "FP",
-            "FN",
-            "TP",
-        ]
-
-        summary = summary[columns]
+        # Tạo bảng tổng hợp kết quả
+        summary = pd.DataFrame(
+            summary_rows,
+            columns=METRIC_COLUMNS
+        )
 
         print("\n" + "=" * 55)
         print("BẢNG SO SÁNH CÁC MÔ HÌNH TRÊN TRAIN VÀ TEST")
@@ -574,24 +784,32 @@ def main(run_id=None):
 
         print(summary.round(4).to_string(index=False))
 
-        summary_path = REPORT_DIR / "metrics_summary.csv"
-
-        summary.to_csv(
-            summary_path,
-            index=False,
-            encoding="utf-8-sig",
+        # Lưu metrics theo Run_ID, không ghi đè lịch sử
+        summary_path = save_metrics(
+            summary,
+            run_id
         )
 
         print(f"[DONE] Đã lưu bảng metrics tại: {summary_path}")
 
-        # Ve confusion matrix tong hop
+        # Vẽ Confusion Matrix tổng hợp
         all_confusion_matrices_path = (
+            evaluation_figure_dir
+            / "confusion_matrix_all.png"
+        )
+
+        legacy_all_confusion_matrices_path = (
             IMAGE_DIR / "confusion_matrix_all.png"
         )
 
         plot_all_confusion_matrices(
             test_results,
-            all_confusion_matrices_path,
+            all_confusion_matrices_path
+        )
+
+        plot_all_confusion_matrices(
+            test_results,
+            legacy_all_confusion_matrices_path
         )
 
         print(
@@ -599,8 +817,14 @@ def main(run_id=None):
             f"{all_confusion_matrices_path}"
         )
 
-        # Ve ROC Curve va tinh AUC
-        roc_curve_path = IMAGE_DIR / "roc_curve_all.png"
+        # Vẽ ROC Curve và tính AUC
+        roc_curve_path = (
+            evaluation_figure_dir / "roc_curve_all.png"
+        )
+
+        legacy_roc_curve_path = (
+            IMAGE_DIR / "roc_curve_all.png"
+        )
 
         auc_results = plot_roc_curve(
             y_test,
@@ -609,7 +833,45 @@ def main(run_id=None):
             roc_curve_path
         )
 
-        # Tim mo hinh co F1 cao nhat tren Test
+        plot_roc_curve(
+            y_test,
+            models,
+            X_test,
+            legacy_roc_curve_path
+        )
+
+        # Vẽ biểu đồ so sánh các chỉ số
+        metric_comparison_path = (
+            evaluation_figure_dir
+            / "metrics_comparison.png"
+        )
+
+        tpr_fpr_comparison_path = (
+            evaluation_figure_dir
+            / "tpr_fpr_comparison.png"
+        )
+
+        plot_metric_comparison(
+            test_results,
+            metric_comparison_path
+        )
+
+        plot_tpr_fpr_comparison(
+            test_results,
+            tpr_fpr_comparison_path
+        )
+
+        print(
+            f"[DONE] Đã lưu biểu đồ so sánh metrics: "
+            f"{metric_comparison_path}"
+        )
+
+        print(
+            f"[DONE] Đã lưu biểu đồ TPR/FPR: "
+            f"{tpr_fpr_comparison_path}"
+        )
+
+        # Tìm mô hình tốt nhất theo F1
         test_summary = summary[
             summary["Tập dữ liệu"] == "Test"
         ]
@@ -644,7 +906,7 @@ def main(run_id=None):
             f"(AUC = {auc_results[best_auc_model]:.4f})"
         )
 
-        # Tong hop cac file dau ra
+        # Tổng hợp danh sách file đầu ra
         saved_files = [
             "reports/metrics_summary.csv",
             "docs/images/confusion_matrix_lr.png",
@@ -654,9 +916,16 @@ def main(run_id=None):
             "docs/images/roc_curve_all.png",
         ]
 
+        saved_files.extend(
+            str(path.relative_to(ROOT_DIR)).replace("\\", "/")
+            for path in sorted(
+                evaluation_figure_dir.glob("*.png")
+            )
+        )
+
         total_time = time.perf_counter() - start_time
 
-        # Ghi ket qua danh gia tong the
+        # Ghi kết quả đánh giá tổng thể
         update_progress(
             run_id,
             "EVALUATION",
@@ -676,6 +945,13 @@ def main(run_id=None):
                     for name, value in auc_results.items()
                 },
                 "summary_file": str(summary_path),
+                "figure_directory": str(evaluation_figure_dir),
+                "saved_figures": [
+                    str(path)
+                    for path in sorted(
+                        evaluation_figure_dir.glob("*.png")
+                    )
+                ],
                 "saved_files": saved_files,
                 "evaluation_time_seconds": round(
                     total_time, 4

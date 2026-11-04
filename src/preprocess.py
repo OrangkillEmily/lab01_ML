@@ -8,7 +8,22 @@ import yaml
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
-from tracking import create_run, update_progress, write_log, finish_run
+from src.tracking import (
+    create_run,
+    update_progress,
+    write_log,
+    finish_run
+)
+
+from src.visualize import (
+    create_stage_dir,
+    save_cleaning_comparison,
+    save_preprocessing_steps,
+    save_train_test_distribution,
+    save_tfidf_sparsity,
+    save_tfidf_top_features
+)
+
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT_DIR / "data" / "raw" / "SpamAssassin.csv"
@@ -43,7 +58,12 @@ def main(run_id=None):
 
     start_time = time.perf_counter()
 
-    write_log(run_id, "PREPROCESSING", "START", "Bat dau tien xu ly du lieu")
+    write_log(
+        run_id,
+        "PREPROCESSING",
+        "START",
+        "Bat dau tien xu ly du lieu"
+    )
 
     try:
         # Doc cau hinh tu config.yaml
@@ -63,28 +83,90 @@ def main(run_id=None):
 
         # Doc du lieu
         df = pd.read_csv(DATA_PATH)
+
         original_rows = len(df)
 
-        # Chi giu cac dong co nhan va noi dung
-        df = df.dropna(subset=["label", "data"]).copy()
+        # Tao thu muc luu hinh cho run hien tai
+        figure_dir = create_stage_dir(run_id, "preprocessing")
+
+        # -------------------------------------------------
+        # STEP 1: LOAI BO GIA TRI THIEU
+        # -------------------------------------------------
+
+        df = df.dropna(
+            subset=["label", "data"]
+        ).copy()
+
         rows_after_dropna = len(df)
 
-        # Xoa email trung lap theo noi dung va nhan
-        df = df.drop_duplicates(subset=["label", "data"])
+        # -------------------------------------------------
+        # STEP 2: LOAI BO EMAIL TRUNG LAP
+        # -------------------------------------------------
+
+        df = df.drop_duplicates(
+            subset=["label", "data"]
+        )
+
         rows_after_duplicates = len(df)
 
-        # Lam sach noi dung email
+        # Luu lai email goc de so sanh truoc/sau lam sach
+        raw_texts = df["data"].copy()
+
+        # -------------------------------------------------
+        # STEP 3: LAM SACH NOI DUNG EMAIL
+        # -------------------------------------------------
+
         df["data"] = df["data"].apply(clean_text)
 
-        # Bo email rong sau khi lam sach
-        df = df[df["data"].str.len() > 0]
+        # Chon mot email hop le de minh hoa
+        valid_indices = df.index[df["data"].str.len() > 0]
+
+        if len(valid_indices) > 0:
+            sample_index = valid_indices[0]
+
+            raw_sample = raw_texts.loc[sample_index]
+            cleaned_sample = df.loc[sample_index, "data"]
+        else:
+            raw_sample = ""
+            cleaned_sample = ""
+
+        # -------------------------------------------------
+        # STEP 4: LOAI BO EMAIL RONG
+        # -------------------------------------------------
+
+        df = df[df["data"].str.len() > 0].copy()
+
         rows_after_cleaning = len(df)
 
         X = df["data"]
         y = df["label"]
 
-        # Chia du lieu Train/Test theo cau hinh
-        # Stratify giu ty le nhan gan voi du lieu ban dau
+        # -------------------------------------------------
+        # VISUALIZATION: CAC BUOC TIEN XU LY
+        # -------------------------------------------------
+
+        step_counts = {
+            "Original": original_rows,
+            "After Drop NA": rows_after_dropna,
+            "After Deduplication": rows_after_duplicates,
+            "After Cleaning": rows_after_cleaning
+        }
+
+        save_preprocessing_steps(
+            step_counts,
+            figure_dir
+        )
+
+        save_cleaning_comparison(
+            raw_sample,
+            cleaned_sample,
+            figure_dir
+        )
+
+        # -------------------------------------------------
+        # STEP 5: CHIA TRAIN / TEST
+        # -------------------------------------------------
+
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             y,
@@ -93,7 +175,16 @@ def main(run_id=None):
             stratify=y
         )
 
-        # Tao vectorizer TF-IDF
+        save_train_test_distribution(
+            y_train,
+            y_test,
+            figure_dir
+        )
+
+        # -------------------------------------------------
+        # STEP 6: CHUYEN VAN BAN THANH TF-IDF
+        # -------------------------------------------------
+
         vectorizer = TfidfVectorizer(
             max_features=max_features,
             ngram_range=ngram_range,
@@ -102,13 +193,33 @@ def main(run_id=None):
 
         # Chi fit tren Train de tranh ro ri du lieu
         X_train_tfidf = vectorizer.fit_transform(X_train)
+
+        # Test chi transform, khong fit lai
         X_test_tfidf = vectorizer.transform(X_test)
 
-        # Tao thu muc dau ra
+        # -------------------------------------------------
+        # VISUALIZATION: KET QUA TF-IDF
+        # -------------------------------------------------
+
+        save_tfidf_sparsity(
+            X_train_tfidf,
+            X_test_tfidf,
+            figure_dir
+        )
+
+        save_tfidf_top_features(
+            X_train_tfidf,
+            vectorizer,
+            figure_dir
+        )
+
+        # -------------------------------------------------
+        # STEP 7: LUU DU LIEU VA MODEL
+        # -------------------------------------------------
+
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Luu 4 tap du lieu dang PKL
         output_data = {
             "X_train.pkl": X_train_tfidf,
             "X_test.pkl": X_test_tfidf,
@@ -120,19 +231,28 @@ def main(run_id=None):
             with open(OUTPUT_DIR / filename, "wb") as file:
                 pickle.dump(data, file)
 
-        # Luu du lieu da lam sach de kiem tra
+        # Luu du lieu da lam sach
         pd.DataFrame({
             "data": X_train,
             "label": y_train
-        }).to_csv(OUTPUT_DIR / "train_clean.csv", index=False)
+        }).to_csv(
+            OUTPUT_DIR / "train_clean.csv",
+            index=False
+        )
 
         pd.DataFrame({
             "data": X_test,
             "label": y_test
-        }).to_csv(OUTPUT_DIR / "test_clean.csv", index=False)
+        }).to_csv(
+            OUTPUT_DIR / "test_clean.csv",
+            index=False
+        )
 
         # Luu vectorizer TF-IDF
-        with open(MODEL_DIR / "tfidf_vectorizer.pkl", "wb") as file:
+        with open(
+            MODEL_DIR / "tfidf_vectorizer.pkl",
+            "wb"
+        ) as file:
             pickle.dump(vectorizer, file)
 
         print("Da tien xu ly xong.")
@@ -145,10 +265,26 @@ def main(run_id=None):
         print("N-gram range:", ngram_range)
         print("Da luu 4 tap du lieu dang .pkl trong data/processed/")
         print("Da luu TF-IDF trong models/tfidf_vectorizer.pkl")
+        print("Da luu hinh tien xu ly tai:", figure_dir)
 
-        duration = round(time.perf_counter() - start_time, 4)
+        duration = round(
+            time.perf_counter() - start_time,
+            4
+        )
 
-        # Luu ket qua tien xu ly vao progress_results/
+        # Danh sach hinh da tao
+        saved_figures = [
+            str(figure_dir / "cleaning_comparison.png"),
+            str(figure_dir / "preprocessing_steps.png"),
+            str(figure_dir / "train_test_distribution.png"),
+            str(figure_dir / "tfidf_sparsity.png"),
+            str(figure_dir / "tfidf_top_features.png")
+        ]
+
+        # -------------------------------------------------
+        # TRACKING: PROGRESS RESULTS
+        # -------------------------------------------------
+
         update_progress(
             run_id,
             "PREPROCESSING",
@@ -182,6 +318,7 @@ def main(run_id=None):
                     "data/processed/test_clean.csv",
                     "models/tfidf_vectorizer.pkl"
                 ],
+                "saved_figures": saved_figures,
                 "duration_seconds": duration
             }
         )
@@ -205,7 +342,12 @@ def main(run_id=None):
             error=str(error)
         )
 
-        write_log(run_id, "PREPROCESSING", "FAILED", str(error))
+        write_log(
+            run_id,
+            "PREPROCESSING",
+            "FAILED",
+            str(error)
+        )
 
         if own_run:
             finish_run(run_id, "FAILED")

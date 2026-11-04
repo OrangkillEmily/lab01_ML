@@ -1,8 +1,8 @@
+
 import argparse
 import csv
 import html
 import json
-from datetime import datetime
 from pathlib import Path
 
 
@@ -11,7 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 RESULT_DIR = ROOT_DIR / "progress_results"
 LOG_DIR = ROOT_DIR / "logs"
 REPORT_DIR = ROOT_DIR / "reports"
-IMAGE_DIR = ROOT_DIR / "docs" / "images"
+FIGURE_DIR = REPORT_DIR / "figures"
 
 METRICS_FILE = REPORT_DIR / "metrics_summary.csv"
 
@@ -20,6 +20,7 @@ REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_progress(run_id):
     """Tai du lieu tracking JSON."""
+
     progress_path = RESULT_DIR / f"progress_{run_id}.json"
 
     if not progress_path.exists():
@@ -33,6 +34,7 @@ def load_progress(run_id):
 
 def load_log(run_id):
     """Tai file log cua pipeline."""
+
     log_path = LOG_DIR / f"pipeline_{run_id}.log"
 
     if not log_path.exists():
@@ -42,29 +44,88 @@ def load_log(run_id):
         return file.read()
 
 
-def load_metrics():
-    """Tai bang ket qua danh gia mo hinh."""
+def load_metrics(run_id):
+    """Tai metrics theo dung Run_ID cua Pipeline."""
+
     if not METRICS_FILE.exists():
+        print("[WARNING] Khong tim thay metrics_summary.csv.")
         return []
 
-    with open(METRICS_FILE, "r", encoding="utf-8-sig", newline="") as file:
+    with open(
+        METRICS_FILE,
+        "r",
+        encoding="utf-8-sig",
+        newline=""
+    ) as file:
+
         reader = csv.DictReader(file)
-        return list(reader)
+
+        # Khong co cot Run_ID thi khong the xac dinh
+        # ket qua thuoc ve lan chay nao.
+        if not reader.fieldnames or "Run_ID" not in reader.fieldnames:
+            print(
+                "[WARNING] metrics_summary.csv chua co cot Run_ID."
+            )
+            return []
+
+        # Chi lay metrics cua Run_ID hien tai.
+        # Du lieu LEGACY va cac Run_ID khac se bi bo qua.
+        metrics = [
+            row
+            for row in reader
+            if row.get("Run_ID", "").strip() == str(run_id)
+        ]
+
+    print(
+        f"[INFO] Da tai {len(metrics)} dong metrics "
+        f"cho Run_ID: {run_id}"
+    )
+
+    if not metrics:
+        print(
+            f"[WARNING] Khong tim thay metrics cho Run_ID: {run_id}"
+        )
+
+    return metrics
 
 
 def get_latest_run():
-    """Lay run_id moi nhat trong progress_results."""
-    progress_files = list(
-        RESULT_DIR.glob("progress_*.json")
-    )
+    """Lay run_id cua Pipeline thanh cong moi nhat."""
 
-    if not progress_files:
+    progress_files = RESULT_DIR.glob("progress_*.json")
+    pipeline_runs = []
+
+    for progress_path in progress_files:
+        try:
+            with open(
+                progress_path,
+                "r",
+                encoding="utf-8"
+            ) as file:
+                progress = json.load(file)
+
+            if progress.get("status") != "SUCCESS":
+                continue
+
+            has_pipeline = any(
+                step.get("step") == "PIPELINE"
+                and step.get("status") == "SUCCESS"
+                for step in progress.get("steps", [])
+            )
+
+            if has_pipeline:
+                pipeline_runs.append(progress_path)
+
+        except (json.JSONDecodeError, OSError):
+            continue
+
+    if not pipeline_runs:
         raise FileNotFoundError(
-            "Chua co du lieu tracking trong progress_results/."
+            "Khong tim thay Pipeline nao co trang thai SUCCESS."
         )
 
     latest_file = max(
-        progress_files,
+        pipeline_runs,
         key=lambda path: path.stat().st_mtime
     )
 
@@ -73,6 +134,7 @@ def get_latest_run():
 
 def format_value(value):
     """Chuyen du lieu thanh chuoi de hien thi."""
+
     if isinstance(value, dict):
         return json.dumps(
             value,
@@ -92,13 +154,15 @@ def format_value(value):
 
 def get_pipeline_steps(progress):
     """Lay danh sach cac buoc tu tracking."""
+
     return progress.get("steps", [])
 
 
 def get_metrics_table(metrics):
     """Tao bang Markdown tu ket qua CSV."""
+
     if not metrics:
-        return "Chua co du lieu metrics_summary.csv."
+        return "Chua co du lieu metrics cho Run_ID nay."
 
     columns = list(metrics[0].keys())
 
@@ -113,8 +177,9 @@ def get_metrics_table(metrics):
         values = []
 
         for column in columns:
-            value = item.get(column, "")
-            values.append(str(value))
+            value = str(item.get(column, ""))
+            value = value.replace("|", "\\|").replace("\n", " ")
+            values.append(value)
 
         rows.append("| " + " | ".join(values) + " |")
 
@@ -123,6 +188,7 @@ def get_metrics_table(metrics):
 
 def get_best_model(metrics):
     """Tim mo hinh co F1 cao nhat tren tap Test."""
+
     best_model = None
     best_f1 = -1
 
@@ -145,36 +211,46 @@ def get_best_model(metrics):
     return best_model, best_f1
 
 
-def get_images():
-    """Lay cac bieu do da duoc tao."""
-    image_names = [
-        "label_distribution.png",
-        "confusion_matrix_lr.png",
-        "confusion_matrix_nb.png",
-        "confusion_matrix_svm.png",
-        "confusion_matrix_all.png",
-        "roc_curve_all.png"
-    ]
+def get_images(run_id):
+    """Lay cac bieu do cua mot Pipeline run."""
 
-    images = []
+    figure_dir = FIGURE_DIR / run_id
 
-    for image_name in image_names:
-        image_path = IMAGE_DIR / image_name
+    image_groups = {
+        "EDA": figure_dir / "eda",
+        "Preprocessing": figure_dir / "preprocessing",
+        "Training": figure_dir / "training",
+        "Evaluation": figure_dir / "evaluation"
+    }
 
-        if image_path.exists():
-            images.append(image_path)
+    images = {}
+
+    for group_name, folder in image_groups.items():
+        if folder.exists():
+            images[group_name] = sorted(folder.glob("*.png"))
+        else:
+            images[group_name] = []
 
     return images
 
 
+def get_image_relative_path(run_id, group_name, image_path):
+    """Tao duong dan tu reports den file anh."""
+
+    return (
+        f"figures/{run_id}/{group_name.lower()}/"
+        f"{image_path.name}"
+    )
+
+
 def generate_markdown(run_id, progress, metrics, log_content):
     """Tao bao cao Markdown."""
+
     status = progress.get("status", "UNKNOWN")
     start_time = progress.get("start_time", "N/A")
     end_time = progress.get("end_time", "N/A")
 
     best_model, best_f1 = get_best_model(metrics)
-
     steps = get_pipeline_steps(progress)
 
     lines = [
@@ -260,18 +336,32 @@ def generate_markdown(run_id, progress, metrics, log_content):
         ""
     ])
 
-    images = get_images()
+    images = get_images(run_id)
+    total_images = sum(len(group) for group in images.values())
 
-    if images:
-        for image_path in images:
-            relative_path = "../docs/images/" + image_path.name
+    if total_images > 0:
+        for group_name, image_paths in images.items():
+            if not image_paths:
+                continue
 
             lines.extend([
-                f"### {image_path.stem}",
-                "",
-                f"![{image_path.stem}]({relative_path})",
+                f"### {group_name}",
                 ""
             ])
+
+            for image_path in image_paths:
+                relative_path = get_image_relative_path(
+                    run_id,
+                    group_name,
+                    image_path
+                )
+
+                lines.extend([
+                    f"#### {image_path.stem}",
+                    "",
+                    f"![{image_path.stem}]({relative_path})",
+                    ""
+                ])
     else:
         lines.append("Chua co bieu do.")
 
@@ -292,6 +382,7 @@ def generate_markdown(run_id, progress, metrics, log_content):
 
 def generate_html(run_id, progress, metrics, log_content):
     """Tao bao cao HTML."""
+
     status = progress.get("status", "UNKNOWN")
     best_model, best_f1 = get_best_model(metrics)
     steps = get_pipeline_steps(progress)
@@ -325,7 +416,9 @@ def generate_html(run_id, progress, metrics, log_content):
 
         metric_html += "</tbody></table>"
     else:
-        metric_html = "<p>Chua co du lieu metrics.</p>"
+        metric_html = (
+            "<p>Chua co du lieu metrics cho Run_ID nay.</p>"
+        )
 
     step_html = ""
 
@@ -367,17 +460,35 @@ def generate_html(run_id, progress, metrics, log_content):
         step_html += "</div>"
 
     image_html = ""
+    images = get_images(run_id)
 
-    for image_path in get_images():
-        relative_path = "../docs/images/" + image_path.name
+    total_images = sum(len(group) for group in images.values())
 
-        image_html += f"""
-        <div class="image">
-            <h3>{html.escape(image_path.stem)}</h3>
-            <img src="{html.escape(relative_path)}"
-                 alt="{html.escape(image_path.stem)}">
-        </div>
-        """
+    if total_images > 0:
+        for group_name, image_paths in images.items():
+            if not image_paths:
+                continue
+
+            image_html += (
+                f"<h3>{html.escape(group_name)}</h3>"
+            )
+
+            for image_path in image_paths:
+                relative_path = get_image_relative_path(
+                    run_id,
+                    group_name,
+                    image_path
+                )
+
+                image_html += f"""
+                <div class="image">
+                    <h4>{html.escape(image_path.stem)}</h4>
+                    <img src="{html.escape(relative_path)}"
+                         alt="{html.escape(image_path.stem)}">
+                </div>
+                """
+    else:
+        image_html = "<p>Chua co bieu do.</p>"
 
     escaped_log = html.escape(log_content)
 
@@ -398,6 +509,10 @@ body {{
 h1, h2 {{
     border-bottom: 1px solid #ddd;
     padding-bottom: 8px;
+}}
+h3 {{
+    margin-top: 25px;
+    color: #333;
 }}
 .info, .step {{
     border: 1px solid #ddd;
@@ -430,10 +545,14 @@ pre {{
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }}
+.image {{
+    margin: 20px 0 30px;
+}}
 img {{
     max-width: 100%;
     height: auto;
     border: 1px solid #ddd;
+    border-radius: 5px;
 }}
 .error {{
     color: #dc2626;
@@ -476,6 +595,7 @@ img {{
 
 def generate_pdf(run_id, progress, metrics, log_content, output_path):
     """Tao bao cao PDF bang ReportLab."""
+
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER
     from reportlab.lib.pagesizes import A4
@@ -605,6 +725,7 @@ def generate_pdf(run_id, progress, metrics, log_content, output_path):
 
     if metrics:
         headers = list(metrics[0].keys())
+
         metric_data = [[
             Paragraph(escape(str(item)), styles["SmallText"])
             for item in headers
@@ -639,9 +760,13 @@ def generate_pdf(run_id, progress, metrics, log_content, output_path):
         )
 
         story.append(metric_table)
+
     else:
         story.append(
-            Paragraph("Chua co du lieu metrics.", styles["Normal"])
+            Paragraph(
+                "Chua co du lieu metrics cho Run_ID nay.",
+                styles["Normal"]
+            )
         )
 
     best_model, best_f1 = get_best_model(metrics)
@@ -666,40 +791,57 @@ def generate_pdf(run_id, progress, metrics, log_content, output_path):
         )
     )
 
-    # Bieu do
-    images = get_images()
+    # Bieu do theo tung nhom
+    images = get_images(run_id)
+    total_images = sum(len(group) for group in images.values())
 
-    if images:
+    if total_images > 0:
         story.append(PageBreak())
 
         story.append(
             Paragraph("4. BIEU DO KET QUA", styles["Heading2"])
         )
 
-        for image_path in images:
+        for group_name, image_paths in images.items():
+            if not image_paths:
+                continue
+
             story.append(
                 Paragraph(
-                    escape(image_path.stem),
-                    styles["Heading3"]
+                    escape(group_name.upper()),
+                    styles["Heading2"]
                 )
             )
 
-            report_image = Image(str(image_path))
+            for image_path in image_paths:
+                story.append(
+                    Paragraph(
+                        escape(image_path.stem),
+                        styles["Heading3"]
+                    )
+                )
 
-            max_width = A4[0] - 3 * cm
-            max_height = 13 * cm
+                report_image = Image(str(image_path))
 
-            scale = min(
-                max_width / report_image.imageWidth,
-                max_height / report_image.imageHeight,
-                1
-            )
+                max_width = A4[0] - 3 * cm
+                max_height = 13 * cm
 
-            report_image.drawWidth *= scale
-            report_image.drawHeight *= scale
+                scale = min(
+                    max_width / report_image.imageWidth,
+                    max_height / report_image.imageHeight,
+                    1
+                )
 
-            story.append(report_image)
-            story.append(Spacer(1, 12))
+                report_image.drawWidth *= scale
+                report_image.drawHeight *= scale
+
+                story.append(report_image)
+                story.append(Spacer(1, 12))
+
+    else:
+        story.append(
+            Paragraph("Chua co bieu do.", styles["Normal"])
+        )
 
     # Log
     story.append(PageBreak())
@@ -745,8 +887,28 @@ def main():
 
         # Doc du lieu
         progress = load_progress(run_id)
-        metrics = load_metrics()
+        metrics = load_metrics(run_id)
         log_content = load_log(run_id)
+
+        # Kiem tra metrics
+        if metrics:
+            print(
+                f"[INFO] So dong metrics: {len(metrics)}"
+            )
+
+            print("[INFO] Cac mo hinh trong bao cao:")
+
+            for item in metrics:
+                print(
+                    f"  - {item.get('Mô hình')} | "
+                    f"{item.get('Tập dữ liệu')} | "
+                    f"F1: {item.get('F1')}"
+                )
+        else:
+            print(
+                "[WARNING] Bao cao lan chay nay "
+                "chua co du lieu metrics."
+            )
 
         # Tao ten file
         markdown_path = REPORT_DIR / f"report_{run_id}.md"
