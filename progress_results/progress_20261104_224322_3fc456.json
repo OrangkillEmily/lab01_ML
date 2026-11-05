@@ -1,0 +1,116 @@
+{
+    "run_id": "20261104_224322_3fc456",
+    "start_time": "2026-11-04T22:43:22+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "TRAINING - Logistic Regression",
+            "timestamp": "2026-11-04T22:44:02+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {
+                    "learning_rate": 0.1,
+                    "n_iterations": 1000
+                }
+            },
+            "output": {
+                "model_name": "Logistic Regression",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 40.1484,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_lr.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING - Naive Bayes",
+            "timestamp": "2026-11-04T22:44:03+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {}
+            },
+            "output": {
+                "model_name": "Naive Bayes",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 0.2467,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_nb.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING - SVM",
+            "timestamp": "2026-11-04T22:44:10+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {
+                    "learning_rate": 0.01,
+                    "lambda_param": 0.01,
+                    "n_iterations": 100
+                }
+            },
+            "output": {
+                "model_name": "SVM",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 7.6116,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_svm.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING",
+            "timestamp": "2026-11-04T22:44:10+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_samples": 4736,
+                "features": 10000,
+                "models": [
+                    "Logistic Regression",
+                    "Naive Bayes",
+                    "SVM"
+                ]
+            },
+            "output": {
+                "execution_times": {
+                    "Logistic Regression": 40.1484,
+                    "Naive Bayes": 0.2467,
+                    "SVM": 7.6116
+                },
+                "total_training_time": 48.3185,
+                "saved_models": [
+                    "models/model_lr.pkl",
+                    "models/model_nb.pkl",
+                    "models/model_svm.pkl"
+                ],
+                "experiment_log": "docs/experiment_logs.csv"
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-04T22:44:10+07:00"
+}

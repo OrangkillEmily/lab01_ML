@@ -1,0 +1,54 @@
+{
+    "run_id": "20261104_223707_e0daae",
+    "start_time": "2026-11-04T22:37:07+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "EDA",
+            "timestamp": "2026-11-04T22:37:08+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "dataset": "C:\\ML\\lab01_ML\\data\\raw\\SpamAssassin.csv"
+            },
+            "output": {
+                "dataset_shape": [
+                    6046,
+                    4
+                ],
+                "columns": [
+                    "label",
+                    "data",
+                    "filename",
+                    "email_length"
+                ],
+                "missing_values": {
+                    "label": 0,
+                    "data": 0,
+                    "filename": 0
+                },
+                "duplicate_rows": 0,
+                "label_distribution": {
+                    "0": 4150,
+                    "1": 1896
+                },
+                "email_length_statistics": {
+                    "count": 6046.0,
+                    "mean": 1799.6660602050943,
+                    "std": 2079.2343754896,
+                    "min": 28.0,
+                    "25%": 661.25,
+                    "50%": 1133.0,
+                    "75%": 1932.0,
+                    "max": 10773.0
+                },
+                "saved_files": [
+                    "reports/label_distribution.csv",
+                    "docs/images/label_distribution.png"
+                ],
+                "duration_seconds": 0.7881
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-04T22:37:08+07:00"
+}

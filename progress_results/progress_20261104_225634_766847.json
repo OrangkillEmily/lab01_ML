@@ -1,0 +1,302 @@
+{
+    "run_id": "20261104_225634_766847",
+    "start_time": "2026-11-04T22:56:34+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "EVALUATION - Logistic Regression - Train",
+            "timestamp": "2026-11-04T22:56:34+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Logistic Regression",
+                "dataset": "Train",
+                "X_shape": [
+                    4736,
+                    10000
+                ],
+                "y_shape": [
+                    4736
+                ],
+                "samples": 4736,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.9535472972972973,
+                "Precision": 0.9007832898172323,
+                "Recall": 0.9530386740331491,
+                "F1": 0.9261744966442953,
+                "TPR": 0.9530386740331491,
+                "FPR": 0.046228710462287104,
+                "AUC": 0.9716361438211613,
+                "TN": 3136,
+                "FP": 152,
+                "FN": 68,
+                "TP": 1380,
+                "confusion_matrix": [
+                    [
+                        3136,
+                        152
+                    ],
+                    [
+                        68,
+                        1380
+                    ]
+                ],
+                "evaluation_time_seconds": 0.0052
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION - Logistic Regression - Test",
+            "timestamp": "2026-11-04T22:56:34+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Logistic Regression",
+                "dataset": "Test",
+                "X_shape": [
+                    1184,
+                    10000
+                ],
+                "y_shape": [
+                    1184
+                ],
+                "samples": 1184,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.9315878378378378,
+                "Precision": 0.8469135802469135,
+                "Recall": 0.9475138121546961,
+                "F1": 0.8943937418513689,
+                "TPR": 0.9475138121546961,
+                "FPR": 0.07542579075425791,
+                "AUC": 0.9596792622763506,
+                "TN": 760,
+                "FP": 62,
+                "FN": 19,
+                "TP": 343,
+                "confusion_matrix": [
+                    [
+                        760,
+                        62
+                    ],
+                    [
+                        19,
+                        343
+                    ]
+                ],
+                "evaluation_time_seconds": 0.0034
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION - Naive Bayes - Train",
+            "timestamp": "2026-11-04T22:56:35+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Naive Bayes",
+                "dataset": "Train",
+                "X_shape": [
+                    4736,
+                    10000
+                ],
+                "y_shape": [
+                    4736
+                ],
+                "samples": 4736,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.9961993243243243,
+                "Precision": 0.9897260273972602,
+                "Recall": 0.9979281767955801,
+                "F1": 0.9938101788170564,
+                "TPR": 0.9979281767955801,
+                "FPR": 0.004562043795620438,
+                "AUC": 0.9999590424244869,
+                "TN": 3273,
+                "FP": 15,
+                "FN": 3,
+                "TP": 1445,
+                "confusion_matrix": [
+                    [
+                        3273,
+                        15
+                    ],
+                    [
+                        3,
+                        1445
+                    ]
+                ],
+                "evaluation_time_seconds": 0.7086
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION - Naive Bayes - Test",
+            "timestamp": "2026-11-04T22:56:35+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Naive Bayes",
+                "dataset": "Test",
+                "X_shape": [
+                    1184,
+                    10000
+                ],
+                "y_shape": [
+                    1184
+                ],
+                "samples": 1184,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.972972972972973,
+                "Precision": 0.9634831460674157,
+                "Recall": 0.9475138121546961,
+                "F1": 0.9554317548746517,
+                "TPR": 0.9475138121546961,
+                "FPR": 0.015815085158150853,
+                "AUC": 0.9935476065653103,
+                "TN": 809,
+                "FP": 13,
+                "FN": 19,
+                "TP": 343,
+                "confusion_matrix": [
+                    [
+                        809,
+                        13
+                    ],
+                    [
+                        19,
+                        343
+                    ]
+                ],
+                "evaluation_time_seconds": 0.1652
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION - SVM - Train",
+            "timestamp": "2026-11-04T22:56:35+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "SVM",
+                "dataset": "Train",
+                "X_shape": [
+                    4736,
+                    10000
+                ],
+                "y_shape": [
+                    4736
+                ],
+                "samples": 4736,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.7193834459459459,
+                "Precision": 0.8888888888888888,
+                "Recall": 0.09392265193370165,
+                "F1": 0.16989381636477202,
+                "TPR": 0.09392265193370165,
+                "FPR": 0.005170316301703163,
+                "AUC": 0.9747585813472059,
+                "TN": 3271,
+                "FP": 17,
+                "FN": 1312,
+                "TP": 136,
+                "confusion_matrix": [
+                    [
+                        3271,
+                        17
+                    ],
+                    [
+                        1312,
+                        136
+                    ]
+                ],
+                "evaluation_time_seconds": 0.002
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION - SVM - Test",
+            "timestamp": "2026-11-04T22:56:35+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "SVM",
+                "dataset": "Test",
+                "X_shape": [
+                    1184,
+                    10000
+                ],
+                "y_shape": [
+                    1184
+                ],
+                "samples": 1184,
+                "features": 10000
+            },
+            "output": {
+                "Accuracy": 0.71875,
+                "Precision": 0.8918918918918919,
+                "Recall": 0.09116022099447514,
+                "F1": 0.16541353383458646,
+                "TPR": 0.09116022099447514,
+                "FPR": 0.004866180048661801,
+                "AUC": 0.9647269158903631,
+                "TN": 818,
+                "FP": 4,
+                "FN": 329,
+                "TP": 33,
+                "confusion_matrix": [
+                    [
+                        818,
+                        4
+                    ],
+                    [
+                        329,
+                        33
+                    ]
+                ],
+                "evaluation_time_seconds": 0.0015
+            },
+            "error": null
+        },
+        {
+            "step": "EVALUATION",
+            "timestamp": "2026-11-04T22:56:36+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_samples": 4736,
+                "test_samples": 1184,
+                "features": 10000,
+                "models": [
+                    "Logistic Regression",
+                    "Naive Bayes",
+                    "SVM"
+                ]
+            },
+            "output": {
+                "best_model_by_f1": "Naive Bayes",
+                "best_f1": 0.9554317548746517,
+                "best_model_by_auc": "Naive Bayes",
+                "auc_results": {
+                    "Logistic Regression": 0.9596792622763506,
+                    "Naive Bayes": 0.9935476065653103,
+                    "SVM": 0.9647269158903631
+                },
+                "summary_file": "C:\\ML\\lab01_ML\\reports\\metrics_summary.csv",
+                "saved_files": [
+                    "reports/metrics_summary.csv",
+                    "docs/images/confusion_matrix_lr.png",
+                    "docs/images/confusion_matrix_nb.png",
+                    "docs/images/confusion_matrix_svm.png",
+                    "docs/images/confusion_matrix_all.png",
+                    "docs/images/roc_curve_all.png"
+                ],
+                "evaluation_time_seconds": 2.0718
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-04T22:56:36+07:00"
+}
