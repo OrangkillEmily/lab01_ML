@@ -1,0 +1,27 @@
+[2026-11-05T01:37:38+07:00] [START] [PIPELINE] Bat dau quy trinh may hoc.
+[2026-11-05T01:37:38+07:00] [START] [EDA] Bat dau buoc EDA.
+[2026-11-05T01:37:38+07:00] [START] [EDA] Bat dau phan tich du lieu
+[2026-11-05T01:37:39+07:00] [SUCCESS] [EDA] Hoan thanh EDA trong 0.5605 giay
+[2026-11-05T01:37:39+07:00] [SUCCESS] [EDA] Hoan thanh trong 0.58 giay.
+[2026-11-05T01:37:39+07:00] [START] [PREPROCESSING] Bat dau buoc PREPROCESSING.
+[2026-11-05T01:37:39+07:00] [START] [PREPROCESSING] Bat dau tien xu ly du lieu
+[2026-11-05T01:37:43+07:00] [SUCCESS] [PREPROCESSING] Hoan thanh tien xu ly trong 3.8277 giay
+[2026-11-05T01:37:43+07:00] [SUCCESS] [PREPROCESSING] Hoan thanh trong 3.85 giay.
+[2026-11-05T01:37:43+07:00] [START] [TRAINING] Bat dau buoc TRAINING.
+[2026-11-05T01:37:43+07:00] [START] [TRAINING] Bat dau huan luyen mo hinh
+[2026-11-05T01:38:28+07:00] [SUCCESS] [TRAINING - Logistic Regression] Training completed in 45.51 seconds
+[2026-11-05T01:38:29+07:00] [SUCCESS] [TRAINING - Naive Bayes] Training completed in 0.29 seconds
+[2026-11-05T01:38:37+07:00] [SUCCESS] [TRAINING - SVM] Training completed in 8.05 seconds
+[2026-11-05T01:38:37+07:00] [SUCCESS] [TRAINING] Hoan thanh training trong 54.3011 giay
+[2026-11-05T01:38:37+07:00] [SUCCESS] [TRAINING] Hoan thanh trong 54.34 giay.
+[2026-11-05T01:38:37+07:00] [START] [EVALUATION] Bat dau buoc EVALUATION.
+[2026-11-05T01:38:37+07:00] [START] [EVALUATION] Bat dau danh gia cac mo hinh.
+[2026-11-05T01:38:37+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Train] Danh gia Logistic Regression tren Train hoan tat. F1=0.9262, AUC=0.9716
+[2026-11-05T01:38:37+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Test] Danh gia Logistic Regression tren Test hoan tat. F1=0.8944, AUC=0.9597
+[2026-11-05T01:38:38+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Train] Danh gia Naive Bayes tren Train hoan tat. F1=0.9938, AUC=1.0000
+[2026-11-05T01:38:38+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Test] Danh gia Naive Bayes tren Test hoan tat. F1=0.9554, AUC=0.9935
+[2026-11-05T01:38:38+07:00] [SUCCESS] [EVALUATION - SVM - Train] Danh gia SVM tren Train hoan tat. F1=0.1699, AUC=0.9748
+[2026-11-05T01:38:39+07:00] [SUCCESS] [EVALUATION - SVM - Test] Danh gia SVM tren Test hoan tat. F1=0.1654, AUC=0.9647
+[2026-11-05T01:38:40+07:00] [SUCCESS] [EVALUATION] Danh gia hoan tat trong 3.24 giay.
+[2026-11-05T01:38:40+07:00] [SUCCESS] [EVALUATION] Hoan thanh trong 3.26 giay.
+[2026-11-05T01:38:40+07:00] [SUCCESS] [PIPELINE] Hoan thanh toan bo quy trinh trong 62.03 giay.

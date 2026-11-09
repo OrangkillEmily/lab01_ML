@@ -1,0 +1,135 @@
+{
+    "run_id": "20261105_004524_203199",
+    "start_time": "2026-11-05T00:45:24+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "PREDICTION - TEXT CLEANING",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "input_length": 54
+            },
+            "output": {
+                "cleaned_text": "congratulations you won a free prize click here now",
+                "cleaned_length": 51,
+                "cleaning_time_seconds": 0.000192
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - TF-IDF",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": null,
+            "output": {
+                "feature_shape": [
+                    1,
+                    10000
+                ],
+                "samples": 1,
+                "features": 10000,
+                "tfidf_time_seconds": 0.000831
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - Logistic Regression",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Logistic Regression",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 1,
+                "label": "Spam",
+                "prediction_time_seconds": 0.000205
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - Naive Bayes",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "Naive Bayes",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 1,
+                "label": "Spam",
+                "prediction_time_seconds": 0.000588
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION - SVM",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "model_name": "SVM",
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "prediction": 0,
+                "label": "Ham",
+                "prediction_time_seconds": 7.4e-05
+            },
+            "error": null
+        },
+        {
+            "step": "PREDICTION",
+            "timestamp": "2026-11-05T00:45:24+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "models": [
+                    "Logistic Regression",
+                    "Naive Bayes",
+                    "SVM"
+                ],
+                "feature_shape": [
+                    1,
+                    10000
+                ]
+            },
+            "output": {
+                "feature_shape": [
+                    1,
+                    10000
+                ],
+                "cleaning_time_seconds": 0.000192,
+                "tfidf_time_seconds": 0.000831,
+                "predictions": {
+                    "Logistic Regression": {
+                        "prediction": 1,
+                        "label": "Spam",
+                        "prediction_time_seconds": 0.000205
+                    },
+                    "Naive Bayes": {
+                        "prediction": 1,
+                        "label": "Spam",
+                        "prediction_time_seconds": 0.000588
+                    },
+                    "SVM": {
+                        "prediction": 0,
+                        "label": "Ham",
+                        "prediction_time_seconds": 7.4e-05
+                    }
+                },
+                "total_prediction_time_seconds": 0.085624
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-05T00:45:24+07:00"
+}
