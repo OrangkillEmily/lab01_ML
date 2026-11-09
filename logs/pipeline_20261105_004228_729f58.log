@@ -1,0 +1,6 @@
+[2026-11-05T00:42:28+07:00] [SUCCESS] [TEXT CLEANING] Da lam sach email thanh cong.
+[2026-11-05T00:42:28+07:00] [SUCCESS] [TF-IDF] Vector TF-IDF co kich thuoc (1, 10000).
+[2026-11-05T00:42:28+07:00] [SUCCESS] [Logistic Regression] Du doan: Spam.
+[2026-11-05T00:42:28+07:00] [SUCCESS] [Naive Bayes] Du doan: Spam.
+[2026-11-05T00:42:28+07:00] [SUCCESS] [SVM] Du doan: Ham.
+[2026-11-05T00:42:28+07:00] [SUCCESS] [PREDICTION] Hoan thanh du doan email bang tat ca mo hinh.

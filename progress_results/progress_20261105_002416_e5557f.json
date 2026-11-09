@@ -1,0 +1,121 @@
+{
+    "run_id": "20261105_002416_e5557f",
+    "start_time": "2026-11-05T00:24:16+07:00",
+    "status": "SUCCESS",
+    "steps": [
+        {
+            "step": "TRAINING - Logistic Regression",
+            "timestamp": "2026-11-05T00:24:48+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {
+                    "learning_rate": 0.1,
+                    "n_iterations": 1000
+                }
+            },
+            "output": {
+                "model_name": "Logistic Regression",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 31.8323,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_lr.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING - Naive Bayes",
+            "timestamp": "2026-11-05T00:24:49+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {}
+            },
+            "output": {
+                "model_name": "Naive Bayes",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 0.2985,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_nb.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING - SVM",
+            "timestamp": "2026-11-05T00:24:56+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_shape": [
+                    4736,
+                    10000
+                ],
+                "label_shape": [
+                    4736
+                ],
+                "parameters": {
+                    "learning_rate": 0.01,
+                    "lambda_param": 0.01,
+                    "n_iterations": 100
+                }
+            },
+            "output": {
+                "model_name": "SVM",
+                "status": "TRAINED",
+                "train_samples": 4736,
+                "features": 10000,
+                "training_time_seconds": 7.7285,
+                "saved_model": "C:\\ML\\lab01_ML\\models\\model_svm.pkl"
+            },
+            "error": null
+        },
+        {
+            "step": "TRAINING",
+            "timestamp": "2026-11-05T00:24:57+07:00",
+            "status": "SUCCESS",
+            "input": {
+                "train_samples": 4736,
+                "features": 10000,
+                "models": [
+                    "Logistic Regression",
+                    "Naive Bayes",
+                    "SVM"
+                ]
+            },
+            "output": {
+                "execution_times": {
+                    "Logistic Regression": 31.8323,
+                    "Naive Bayes": 0.2985,
+                    "SVM": 7.7285
+                },
+                "total_training_time": 40.6258,
+                "saved_models": [
+                    "models/model_lr.pkl",
+                    "models/model_nb.pkl",
+                    "models/model_svm.pkl"
+                ],
+                "saved_figures": [
+                    "C:\\ML\\lab01_ML\\reports\\figures\\20261105_002416_e5557f\\training\\training_time_comparison.png",
+                    "C:\\ML\\lab01_ML\\reports\\figures\\20261105_002416_e5557f\\training\\training_configuration.png",
+                    "C:\\ML\\lab01_ML\\reports\\figures\\20261105_002416_e5557f\\training\\training_dataset_overview.png"
+                ],
+                "experiment_log": "docs/experiment_logs.csv"
+            },
+            "error": null
+        }
+    ],
+    "end_time": "2026-11-05T00:24:57+07:00"
+}
