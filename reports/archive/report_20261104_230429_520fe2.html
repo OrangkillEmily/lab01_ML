@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Báo cáo Lab01 - 20261104_230429_520fe2</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 0 20px;
+    line-height: 1.6;
+    color: #222;
+}
+h1, h2 {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+.info, .step {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+.status {
+    color: #16a34a;
+    font-weight: bold;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+th {
+    background: #f1f1f1;
+}
+pre {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+}
+.error {
+    color: #dc2626;
+}
+</style>
+</head>
+<body>
+
+<h1>BÁO CÁO THỰC NGHIỆM LAB01</h1>
+
+<div class="info">
+    <p><b>Run ID:</b> 20261104_230429_520fe2</p>
+    <p><b>Trạng thái:</b>
+       <span class="status">SUCCESS</span></p>
+    <p><b>Bắt đầu:</b>
+       2026-11-04T23:04:29+07:00</p>
+    <p><b>Kết thúc:</b>
+       2026-11-04T23:05:22+07:00</p>
+</div>
+
+<h2>1. Tiến trình thực hiện</h2>
+
+        <div class="step">
+            <h3>1. EDA</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;dataset&quot;: &quot;C:\\ML\\lab01_ML\\data\\raw\\SpamAssassin.csv&quot;
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;dataset_shape&quot;: [
+    6046,
+    4
+  ],
+  &quot;columns&quot;: [
+    &quot;label&quot;,
+    &quot;data&quot;,
+    &quot;filename&quot;,
+    &quot;email_length&quot;
+  ],
+  &quot;missing_values&quot;: {
+    &quot;label&quot;: 0,
+    &quot;data&quot;: 0,
+    &quot;filename&quot;: 0
+  },
+  &quot;duplicate_rows&quot;: 0,
+  &quot;label_distribution&quot;: {
+    &quot;0&quot;: 4150,
+    &quot;1&quot;: 1896
+  },
+  &quot;email_length_statistics&quot;: {
+    &quot;count&quot;: 6046.0,
+    &quot;mean&quot;: 1799.6660602050943,
+    &quot;std&quot;: 2079.2343754896,
+    &quot;min&quot;: 28.0,
+    &quot;25%&quot;: 661.25,
+    &quot;50%&quot;: 1133.0,
+    &quot;75%&quot;: 1932.0,
+    &quot;max&quot;: 10773.0
+  },
+  &quot;saved_files&quot;: [
+    &quot;reports/label_distribution.csv&quot;,
+    &quot;docs/images/label_distribution.png&quot;
+  ],
+  &quot;duration_seconds&quot;: 0.233
+}</pre>
+        </div>
+        <div class="step">
+            <h3>2. PREPROCESSING</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;dataset&quot;: &quot;C:\\ML\\lab01_ML\\data\\raw\\SpamAssassin.csv&quot;,
+  &quot;config&quot;: &quot;C:\\ML\\lab01_ML\\config.yaml&quot;,
+  &quot;original_rows&quot;: 6046
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;rows_after_dropna&quot;: 6046,
+  &quot;rows_after_duplicates&quot;: 5920,
+  &quot;rows_after_cleaning&quot;: 5920,
+  &quot;train_samples&quot;: 4736,
+  &quot;test_samples&quot;: 1184,
+  &quot;train_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;test_shape&quot;: [
+    1184,
+    10000
+  ],
+  &quot;tfidf_features&quot;: 10000,
+  &quot;parameters&quot;: {
+    &quot;test_size&quot;: 0.2,
+    &quot;random_state&quot;: 42,
+    &quot;max_features&quot;: 10000,
+    &quot;ngram_range&quot;: [
+      1,
+      2
+    ]
+  },
+  &quot;saved_files&quot;: [
+    &quot;data/processed/X_train.pkl&quot;,
+    &quot;data/processed/X_test.pkl&quot;,
+    &quot;data/processed/y_train.pkl&quot;,
+    &quot;data/processed/y_test.pkl&quot;,
+    &quot;data/processed/train_clean.csv&quot;,
+    &quot;data/processed/test_clean.csv&quot;,
+    &quot;models/tfidf_vectorizer.pkl&quot;
+  ],
+  &quot;duration_seconds&quot;: 2.3143
+}</pre>
+        </div>
+        <div class="step">
+            <h3>3. TRAINING - Logistic Regression</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;train_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;label_shape&quot;: [
+    4736
+  ],
+  &quot;parameters&quot;: {
+    &quot;learning_rate&quot;: 0.1,
+    &quot;n_iterations&quot;: 1000
+  }
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Logistic Regression&quot;,
+  &quot;status&quot;: &quot;TRAINED&quot;,
+  &quot;train_samples&quot;: 4736,
+  &quot;features&quot;: 10000,
+  &quot;training_time_seconds&quot;: 40.6236,
+  &quot;saved_model&quot;: &quot;C:\\ML\\lab01_ML\\models\\model_lr.pkl&quot;
+}</pre>
+        </div>
+        <div class="step">
+            <h3>4. TRAINING - Naive Bayes</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;train_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;label_shape&quot;: [
+    4736
+  ],
+  &quot;parameters&quot;: {}
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Naive Bayes&quot;,
+  &quot;status&quot;: &quot;TRAINED&quot;,
+  &quot;train_samples&quot;: 4736,
+  &quot;features&quot;: 10000,
+  &quot;training_time_seconds&quot;: 0.2815,
+  &quot;saved_model&quot;: &quot;C:\\ML\\lab01_ML\\models\\model_nb.pkl&quot;
+}</pre>
+        </div>
+        <div class="step">
+            <h3>5. TRAINING - SVM</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;train_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;label_shape&quot;: [
+    4736
+  ],
+  &quot;parameters&quot;: {
+    &quot;learning_rate&quot;: 0.01,
+    &quot;lambda_param&quot;: 0.01,
+    &quot;n_iterations&quot;: 100
+  }
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;SVM&quot;,
+  &quot;status&quot;: &quot;TRAINED&quot;,
+  &quot;train_samples&quot;: 4736,
+  &quot;features&quot;: 10000,
+  &quot;training_time_seconds&quot;: 7.4825,
+  &quot;saved_model&quot;: &quot;C:\\ML\\lab01_ML\\models\\model_svm.pkl&quot;
+}</pre>
+        </div>
+        <div class="step">
+            <h3>6. TRAINING</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;train_samples&quot;: 4736,
+  &quot;features&quot;: 10000,
+  &quot;models&quot;: [
+    &quot;Logistic Regression&quot;,
+    &quot;Naive Bayes&quot;,
+    &quot;SVM&quot;
+  ]
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;execution_times&quot;: {
+    &quot;Logistic Regression&quot;: 40.6236,
+    &quot;Naive Bayes&quot;: 0.2815,
+    &quot;SVM&quot;: 7.4825
+  },
+  &quot;total_training_time&quot;: 48.603,
+  &quot;saved_models&quot;: [
+    &quot;models/model_lr.pkl&quot;,
+    &quot;models/model_nb.pkl&quot;,
+    &quot;models/model_svm.pkl&quot;
+  ],
+  &quot;experiment_log&quot;: &quot;docs/experiment_logs.csv&quot;
+}</pre>
+        </div>
+        <div class="step">
+            <h3>7. EVALUATION - Logistic Regression - Train</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Logistic Regression&quot;,
+  &quot;dataset&quot;: &quot;Train&quot;,
+  &quot;X_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    4736
+  ],
+  &quot;samples&quot;: 4736,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.9535472972972973,
+  &quot;Precision&quot;: 0.9007832898172323,
+  &quot;Recall&quot;: 0.9530386740331491,
+  &quot;F1&quot;: 0.9261744966442953,
+  &quot;TPR&quot;: 0.9530386740331491,
+  &quot;FPR&quot;: 0.046228710462287104,
+  &quot;AUC&quot;: 0.9716361438211613,
+  &quot;TN&quot;: 3136,
+  &quot;FP&quot;: 152,
+  &quot;FN&quot;: 68,
+  &quot;TP&quot;: 1380,
+  &quot;confusion_matrix&quot;: [
+    [
+      3136,
+      152
+    ],
+    [
+      68,
+      1380
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.0029
+}</pre>
+        </div>
+        <div class="step">
+            <h3>8. EVALUATION - Logistic Regression - Test</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Logistic Regression&quot;,
+  &quot;dataset&quot;: &quot;Test&quot;,
+  &quot;X_shape&quot;: [
+    1184,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    1184
+  ],
+  &quot;samples&quot;: 1184,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.9315878378378378,
+  &quot;Precision&quot;: 0.8469135802469135,
+  &quot;Recall&quot;: 0.9475138121546961,
+  &quot;F1&quot;: 0.8943937418513689,
+  &quot;TPR&quot;: 0.9475138121546961,
+  &quot;FPR&quot;: 0.07542579075425791,
+  &quot;AUC&quot;: 0.9596792622763506,
+  &quot;TN&quot;: 760,
+  &quot;FP&quot;: 62,
+  &quot;FN&quot;: 19,
+  &quot;TP&quot;: 343,
+  &quot;confusion_matrix&quot;: [
+    [
+      760,
+      62
+    ],
+    [
+      19,
+      343
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.0019
+}</pre>
+        </div>
+        <div class="step">
+            <h3>9. EVALUATION - Naive Bayes - Train</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Naive Bayes&quot;,
+  &quot;dataset&quot;: &quot;Train&quot;,
+  &quot;X_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    4736
+  ],
+  &quot;samples&quot;: 4736,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.9961993243243243,
+  &quot;Precision&quot;: 0.9897260273972602,
+  &quot;Recall&quot;: 0.9979281767955801,
+  &quot;F1&quot;: 0.9938101788170564,
+  &quot;TPR&quot;: 0.9979281767955801,
+  &quot;FPR&quot;: 0.004562043795620438,
+  &quot;AUC&quot;: 0.9999590424244869,
+  &quot;TN&quot;: 3273,
+  &quot;FP&quot;: 15,
+  &quot;FN&quot;: 3,
+  &quot;TP&quot;: 1445,
+  &quot;confusion_matrix&quot;: [
+    [
+      3273,
+      15
+    ],
+    [
+      3,
+      1445
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.6025
+}</pre>
+        </div>
+        <div class="step">
+            <h3>10. EVALUATION - Naive Bayes - Test</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;Naive Bayes&quot;,
+  &quot;dataset&quot;: &quot;Test&quot;,
+  &quot;X_shape&quot;: [
+    1184,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    1184
+  ],
+  &quot;samples&quot;: 1184,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.972972972972973,
+  &quot;Precision&quot;: 0.9634831460674157,
+  &quot;Recall&quot;: 0.9475138121546961,
+  &quot;F1&quot;: 0.9554317548746517,
+  &quot;TPR&quot;: 0.9475138121546961,
+  &quot;FPR&quot;: 0.015815085158150853,
+  &quot;AUC&quot;: 0.9935476065653103,
+  &quot;TN&quot;: 809,
+  &quot;FP&quot;: 13,
+  &quot;FN&quot;: 19,
+  &quot;TP&quot;: 343,
+  &quot;confusion_matrix&quot;: [
+    [
+      809,
+      13
+    ],
+    [
+      19,
+      343
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.1491
+}</pre>
+        </div>
+        <div class="step">
+            <h3>11. EVALUATION - SVM - Train</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;SVM&quot;,
+  &quot;dataset&quot;: &quot;Train&quot;,
+  &quot;X_shape&quot;: [
+    4736,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    4736
+  ],
+  &quot;samples&quot;: 4736,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.7193834459459459,
+  &quot;Precision&quot;: 0.8888888888888888,
+  &quot;Recall&quot;: 0.09392265193370165,
+  &quot;F1&quot;: 0.16989381636477202,
+  &quot;TPR&quot;: 0.09392265193370165,
+  &quot;FPR&quot;: 0.005170316301703163,
+  &quot;AUC&quot;: 0.9747585813472059,
+  &quot;TN&quot;: 3271,
+  &quot;FP&quot;: 17,
+  &quot;FN&quot;: 1312,
+  &quot;TP&quot;: 136,
+  &quot;confusion_matrix&quot;: [
+    [
+      3271,
+      17
+    ],
+    [
+      1312,
+      136
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.0025
+}</pre>
+        </div>
+        <div class="step">
+            <h3>12. EVALUATION - SVM - Test</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;model_name&quot;: &quot;SVM&quot;,
+  &quot;dataset&quot;: &quot;Test&quot;,
+  &quot;X_shape&quot;: [
+    1184,
+    10000
+  ],
+  &quot;y_shape&quot;: [
+    1184
+  ],
+  &quot;samples&quot;: 1184,
+  &quot;features&quot;: 10000
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;Accuracy&quot;: 0.71875,
+  &quot;Precision&quot;: 0.8918918918918919,
+  &quot;Recall&quot;: 0.09116022099447514,
+  &quot;F1&quot;: 0.16541353383458646,
+  &quot;TPR&quot;: 0.09116022099447514,
+  &quot;FPR&quot;: 0.004866180048661801,
+  &quot;AUC&quot;: 0.9647269158903631,
+  &quot;TN&quot;: 818,
+  &quot;FP&quot;: 4,
+  &quot;FN&quot;: 329,
+  &quot;TP&quot;: 33,
+  &quot;confusion_matrix&quot;: [
+    [
+      818,
+      4
+    ],
+    [
+      329,
+      33
+    ]
+  ],
+  &quot;evaluation_time_seconds&quot;: 0.0012
+}</pre>
+        </div>
+        <div class="step">
+            <h3>13. EVALUATION</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>{
+  &quot;train_samples&quot;: 4736,
+  &quot;test_samples&quot;: 1184,
+  &quot;features&quot;: 10000,
+  &quot;models&quot;: [
+    &quot;Logistic Regression&quot;,
+    &quot;Naive Bayes&quot;,
+    &quot;SVM&quot;
+  ]
+}</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;best_model_by_f1&quot;: &quot;Naive Bayes&quot;,
+  &quot;best_f1&quot;: 0.9554317548746517,
+  &quot;best_model_by_auc&quot;: &quot;Naive Bayes&quot;,
+  &quot;auc_results&quot;: {
+    &quot;Logistic Regression&quot;: 0.9596792622763506,
+    &quot;Naive Bayes&quot;: 0.9935476065653103,
+    &quot;SVM&quot;: 0.9647269158903631
+  },
+  &quot;summary_file&quot;: &quot;C:\\ML\\lab01_ML\\reports\\metrics_summary.csv&quot;,
+  &quot;saved_files&quot;: [
+    &quot;reports/metrics_summary.csv&quot;,
+    &quot;docs/images/confusion_matrix_lr.png&quot;,
+    &quot;docs/images/confusion_matrix_nb.png&quot;,
+    &quot;docs/images/confusion_matrix_svm.png&quot;,
+    &quot;docs/images/confusion_matrix_all.png&quot;,
+    &quot;docs/images/roc_curve_all.png&quot;
+  ],
+  &quot;evaluation_time_seconds&quot;: 1.9299
+}</pre>
+        </div>
+        <div class="step">
+            <h3>14. PIPELINE</h3>
+            <p>Trạng thái: <b>SUCCESS</b></p>
+            <h4>Input</h4>
+            <pre>N/A</pre>
+            <h4>Output</h4>
+            <pre>{
+  &quot;total_execution_time_seconds&quot;: 53.1894,
+  &quot;completed_steps&quot;: [
+    &quot;EDA&quot;,
+    &quot;PREPROCESSING&quot;,
+    &quot;TRAINING&quot;,
+    &quot;EVALUATION&quot;
+  ]
+}</pre>
+        </div>
+
+<h2>2. Kết quả đánh giá mô hình</h2>
+<table><thead><tr><th>Mô hình</th><th>Tập dữ liệu</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>TPR</th><th>FPR</th><th>AUC</th><th>TN</th><th>FP</th><th>FN</th><th>TP</th></tr></thead><tbody><tr><td>Logistic Regression</td><td>Train</td><td>0.9535472972972973</td><td>0.9007832898172323</td><td>0.9530386740331491</td><td>0.9261744966442953</td><td>0.9530386740331491</td><td>0.046228710462287104</td><td>0.9716361438211613</td><td>3136</td><td>152</td><td>68</td><td>1380</td></tr><tr><td>Logistic Regression</td><td>Test</td><td>0.9315878378378378</td><td>0.8469135802469135</td><td>0.9475138121546961</td><td>0.8943937418513689</td><td>0.9475138121546961</td><td>0.07542579075425791</td><td>0.9596792622763506</td><td>760</td><td>62</td><td>19</td><td>343</td></tr><tr><td>Naive Bayes</td><td>Train</td><td>0.9961993243243243</td><td>0.9897260273972602</td><td>0.9979281767955801</td><td>0.9938101788170564</td><td>0.9979281767955801</td><td>0.004562043795620438</td><td>0.9999590424244869</td><td>3273</td><td>15</td><td>3</td><td>1445</td></tr><tr><td>Naive Bayes</td><td>Test</td><td>0.972972972972973</td><td>0.9634831460674157</td><td>0.9475138121546961</td><td>0.9554317548746517</td><td>0.9475138121546961</td><td>0.015815085158150853</td><td>0.9935476065653103</td><td>809</td><td>13</td><td>19</td><td>343</td></tr><tr><td>SVM</td><td>Train</td><td>0.7193834459459459</td><td>0.8888888888888888</td><td>0.09392265193370165</td><td>0.16989381636477202</td><td>0.09392265193370165</td><td>0.005170316301703163</td><td>0.9747585813472059</td><td>3271</td><td>17</td><td>1312</td><td>136</td></tr><tr><td>SVM</td><td>Test</td><td>0.71875</td><td>0.8918918918918919</td><td>0.09116022099447514</td><td>0.16541353383458646</td><td>0.09116022099447514</td><td>0.004866180048661801</td><td>0.9647269158903631</td><td>818</td><td>4</td><td>329</td><td>33</td></tr></tbody></table>
+
+<h2>3. Mô hình tốt nhất</h2>
+<p><b>Naive Bayes</b></p>
+<p>F1-score: 0.9554317548746517</p>
+
+<h2>4. Biểu đồ kết quả</h2>
+
+        <div class="image">
+            <h3>label_distribution</h3>
+            <img src="../docs/images/label_distribution.png"
+                 alt="label_distribution">
+        </div>
+
+        <div class="image">
+            <h3>confusion_matrix_lr</h3>
+            <img src="../docs/images/confusion_matrix_lr.png"
+                 alt="confusion_matrix_lr">
+        </div>
+
+        <div class="image">
+            <h3>confusion_matrix_nb</h3>
+            <img src="../docs/images/confusion_matrix_nb.png"
+                 alt="confusion_matrix_nb">
+        </div>
+
+        <div class="image">
+            <h3>confusion_matrix_svm</h3>
+            <img src="../docs/images/confusion_matrix_svm.png"
+                 alt="confusion_matrix_svm">
+        </div>
+
+        <div class="image">
+            <h3>confusion_matrix_all</h3>
+            <img src="../docs/images/confusion_matrix_all.png"
+                 alt="confusion_matrix_all">
+        </div>
+
+        <div class="image">
+            <h3>roc_curve_all</h3>
+            <img src="../docs/images/roc_curve_all.png"
+                 alt="roc_curve_all">
+        </div>
+
+
+<h2>5. Nhật ký thực thi</h2>
+<pre>[2026-11-04T23:04:29+07:00] [START] [PIPELINE] Bat dau quy trinh may hoc.
+[2026-11-04T23:04:29+07:00] [START] [EDA] Bat dau buoc EDA.
+[2026-11-04T23:04:29+07:00] [START] [EDA] Bat dau phan tich du lieu
+[2026-11-04T23:04:29+07:00] [SUCCESS] [EDA] Hoan thanh EDA trong 0.233 giay
+[2026-11-04T23:04:29+07:00] [SUCCESS] [EDA] Hoan thanh trong 0.25 giay.
+[2026-11-04T23:04:29+07:00] [START] [PREPROCESSING] Bat dau buoc PREPROCESSING.
+[2026-11-04T23:04:29+07:00] [START] [PREPROCESSING] Bat dau tien xu ly du lieu
+[2026-11-04T23:04:31+07:00] [SUCCESS] [PREPROCESSING] Hoan thanh tien xu ly trong 2.3143 giay
+[2026-11-04T23:04:31+07:00] [SUCCESS] [PREPROCESSING] Hoan thanh trong 2.34 giay.
+[2026-11-04T23:04:31+07:00] [START] [TRAINING] Bat dau buoc TRAINING.
+[2026-11-04T23:04:31+07:00] [START] [TRAINING] Bat dau huan luyen mo hinh
+[2026-11-04T23:05:12+07:00] [SUCCESS] [TRAINING - Logistic Regression] Training completed in 40.62 seconds
+[2026-11-04T23:05:12+07:00] [SUCCESS] [TRAINING - Naive Bayes] Training completed in 0.28 seconds
+[2026-11-04T23:05:20+07:00] [SUCCESS] [TRAINING - SVM] Training completed in 7.48 seconds
+[2026-11-04T23:05:20+07:00] [SUCCESS] [TRAINING] Hoan thanh training trong 48.603 giay
+[2026-11-04T23:05:20+07:00] [SUCCESS] [TRAINING] Hoan thanh trong 48.65 giay.
+[2026-11-04T23:05:20+07:00] [START] [EVALUATION] Bat dau buoc EVALUATION.
+[2026-11-04T23:05:20+07:00] [START] [EVALUATION] Bat dau danh gia cac mo hinh.
+[2026-11-04T23:05:20+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Train] Danh gia Logistic Regression tren Train hoan tat. F1=0.9262, AUC=0.9716
+[2026-11-04T23:05:20+07:00] [SUCCESS] [EVALUATION - Logistic Regression - Test] Danh gia Logistic Regression tren Test hoan tat. F1=0.8944, AUC=0.9597
+[2026-11-04T23:05:21+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Train] Danh gia Naive Bayes tren Train hoan tat. F1=0.9938, AUC=1.0000
+[2026-11-04T23:05:21+07:00] [SUCCESS] [EVALUATION - Naive Bayes - Test] Danh gia Naive Bayes tren Test hoan tat. F1=0.9554, AUC=0.9935
+[2026-11-04T23:05:21+07:00] [SUCCESS] [EVALUATION - SVM - Train] Danh gia SVM tren Train hoan tat. F1=0.1699, AUC=0.9748
+[2026-11-04T23:05:21+07:00] [SUCCESS] [EVALUATION - SVM - Test] Danh gia SVM tren Test hoan tat. F1=0.1654, AUC=0.9647
+[2026-11-04T23:05:22+07:00] [SUCCESS] [EVALUATION] Danh gia hoan tat trong 1.93 giay.
+[2026-11-04T23:05:22+07:00] [SUCCESS] [EVALUATION] Hoan thanh trong 1.95 giay.
+[2026-11-04T23:05:22+07:00] [SUCCESS] [PIPELINE] Hoan thanh toan bo quy trinh trong 53.19 giay.
+</pre>
+
+</body>
+</html>

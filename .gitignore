@@ -1,8 +1,25 @@
+# Python
+.venv/
 venv/
 env/
-data/processed/*
-!data/processed/.keep
 __pycache__/
 *.pyc
 *.pkl
-model/*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Runtime logs
+/logs/*
+!/logs/.gitkeep
+
+# Pipeline tracking results
+/progress_results/*
+!/progress_results/.gitkeep
+
+# Processed data
+/data/processed/*
+!/data/processed/.keep
